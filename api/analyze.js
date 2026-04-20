@@ -9,15 +9,17 @@ export default async function handler(req, res) {
     const { url, caption } = req.body;
     const videoId = url && url.includes('youtube.com') ? new URL(url).searchParams.get('v') : null;
 
-    const prompt = `You are a fitness coach AI. Analyze this workout and extract every single exercise with specific sets, reps, and rest periods.
+   const prompt = `You are a fitness coach AI. Your job is to extract or intelligently infer workout exercises.
 
 URL: ${url || 'none'}
 Caption/Description: ${caption || 'none'}
 
-Return ONLY valid JSON no markdown:
-{"title":"Workout Name","tag":"HIIT","duration":25,"level":"Beginner","influencer":"@handle","source":"YouTube","notes":"tips","videoId":"${videoId || ''}","exerciseList":[{"name":"Exercise Name","sets":"3","reps":"12","rest":"30s","weight":"","notes":"tip"}]}
+Even if the caption is minimal, use the URL context and your knowledge to generate a complete, realistic workout plan with specific exercises. For example, if the URL suggests a kettlebell workout, generate 5-8 real kettlebell exercises with sets and reps.
 
-Extract EVERY exercise mentioned. Return ONLY the JSON.`;
+Return ONLY valid JSON, no markdown:
+{"title":"Descriptive Workout Title","tag":"HIIT|Strength|Cardio|Yoga|Core|Full Body","duration":30,"level":"Beginner|Intermediate|Advanced","influencer":"@unknown","source":"YouTube","notes":"key coaching tips","exerciseList":[{"name":"Real Exercise Name","sets":"3","reps":"12","rest":"30s","weight":"","notes":"form tip"}]}
+
+You MU
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
