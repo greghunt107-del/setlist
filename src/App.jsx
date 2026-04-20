@@ -447,7 +447,7 @@ Return ONLY the JSON.`;
       const data=await res.json();
       const text=data.content?.find(b=>b.type==="text")?.text||"";
       const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
-      const ytId=new URL(importUrl).searchParams.get("v");const nw={id:Date.now(),emoji:"✨",youtubeId:ytId||null,isOwn:false,...parse
+      const nw={id:Date.now(),emoji:"✨",youtubeId:null,isOwn:false,...parsed};
       setWorkouts(p=>[nw,...p]);
       setImportUrl("");setImportCaption("");setLoading(false);
       setSelectedWorkout(nw);setTab("detail");
