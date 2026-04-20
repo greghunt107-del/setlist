@@ -1,3 +1,5 @@
+const https = require('https');
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -7,16 +9,30 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const body = JSON.stringify(req.body);
+    const options = {
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.VITE_ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify(req.body)
+        'anthropic-version': '2023-06-01',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    };
+
+    const data = await new Promise((resolve, reject) => {
+      const request = https.request(options, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => resolve(JSON.parse(data)));
+      });
+      request.on('error', reject);
+      request.write(body);
+      request.end();
     });
-    const data = await response.json();
+
     res.status(200).json(data);
   } catch(err) {
     res.status(500).json({ error: err.message });
