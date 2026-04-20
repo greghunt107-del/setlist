@@ -443,11 +443,11 @@ Return ONLY valid JSON (no markdown):
 {"title":"Name","tag":"HIIT|Strength|Cardio|Yoga|Core|Full Body","duration":25,"level":"Beginner|Intermediate|Advanced","influencer":"@handle","source":"Instagram|TikTok|YouTube|Other","notes":"tips","exerciseList":[{"name":"Exercise","sets":"3","reps":"12","rest":"30s","weight":"","notes":"form tip"}]}
 Return ONLY the JSON.`;
     try{
-      const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:importude-sonnet-4-5",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+      const res=await window.fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
       const data=await res.json();
-      const text=data.content?.[0]?.text||data.content?.find(b=>b.type==="text")?.text||"";
+      const text=data.content?.find(b=>b.type==="text")?.text||"";
       const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
-      const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,youtubeId:parsed.videoId||null};
+      const nw={id:Date.now(),emoji:"✨",youtubeId:null,isOwn:false,...parsed};
       setWorkouts(p=>[nw,...p]);
       setImportUrl("");setImportCaption("");setLoading(false);
       setSelectedWorkout(nw);setTab("detail");
