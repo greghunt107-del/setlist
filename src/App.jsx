@@ -358,6 +358,7 @@ const VideoOverlay = ({ exercise, onClose }) => {
 // ── Main App ──────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("home");
+  const [search, setSearch] = useState("");
   const [onboarded, setOnboarded] = useState(()=>{try{return localStorage.getItem("sl_onboarded")==="1";}catch{return false;}});
   const [workouts, setWorkouts] = useState(()=>{try{const s=localStorage.getItem("sl_workouts");return s?JSON.parse(s):[];}catch{return[];}});
 const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl_history");return s?JSON.parse(s):[];}catch{return[];}});
@@ -498,7 +499,14 @@ Return ONLY the JSON.`;
 
   // ── Screens ────────────────────────────────────────────────────
 
-  const HomeScreen=()=>(
+ const HomeScreen=()=>{
+  const filtered=workouts.filter(w=>
+    w.title?.toLowerCase().includes(search.toLowerCase())||
+    w.tag?.toLowerCase().includes(search.toLowerCase())||
+    w.influencer?.toLowerCase().includes(search.toLowerCase())||
+    w.level?.toLowerCase().includes(search.toLowerCase())
+  );
+  return(
     <div className="con">
       <div className="sh-row"><span className="sh" style={{margin:0}}>Overview</span></div>
       <div className="hscroll" style={{marginBottom:18}}>
@@ -506,12 +514,19 @@ Return ONLY the JSON.`;
           <div key={l} className="scard"><div className="sval">{v}</div><div className="slbl">{l}</div></div>
         ))}
       </div>
+      <div style={{marginBottom:13,position:"relative"}}>
+        <div style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</div>
+        <input className="tinput" placeholder="Search workouts..." value={search} onChange={e=>setSearch(e.target.value)} style={{paddingLeft:38,borderRadius:13}}/>
+        {search&&<div style={{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",fontSize:18,cursor:"pointer",color:C.muted}} onClick={()=>setSearch("")}>×</div>}
+      </div>
       <div className="sh-row">
-        <span className="sh" style={{margin:0}}>All Workouts</span>
+        <span className="sh" style={{margin:0}}>{search?`Results · ${filtered.length}`:"All Workouts"}</span>
         <span className="sa" onClick={()=>setTab("import")}>+ Import</span>
       </div>
-      {workouts.map((w,i)=>(
-        <div key={w.id} className={`wcard ${i===0?"feat":""}`} onClick={()=>{setSelectedWorkout(w);setTab("detail");}}>
+      {filtered.length===0?(
+        <div className="empty"><div className="empty-icon">🔍</div><div className="etitle">No Results</div><div className="esub">Try a different search term.</div></div>
+      ):filtered.map((w,i)=>(
+        <div key={w.id} className={`wcard ${i===0&&!search?"feat":""}`} onClick={()=>{setSelectedWorkout(w);setTab("detail");}}>
           <div className="wthumb"><span className="thmoji">{w.emoji}</span><span className="cbadge">{w.tag}</span><span className="csrc">{w.isOwn?"✦ Mine":w.influencer||w.source}</span></div>
           <div className="cbody">
             <div className="ctitle">{w.title}</div>
@@ -526,6 +541,7 @@ Return ONLY the JSON.`;
       ))}
     </div>
   );
+};
 
   const ImportScreen=()=>(
     <div className="con">
