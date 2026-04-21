@@ -247,15 +247,9 @@ const YT_FALLBACKS = {
   "Push-Ups":"IODxDxX7oi4","Pull-Ups":"eGo4IYlbE5g","Dips":"2z8JmcrW-As","Lunges":"QOVaHwm-Q6U","Squats":"aclHkVaku9U","Plank":"pSHjTRCQxIw","Crunches":"MKmrqckCjXA","Bench Press":"SCVCLChPQFY","Deadlifts":"op9kVnSso6Q","Bicep Curls":"ykJmrZ5v0Oo","Shoulder Press":"qEwKCR5JCog",
 };
 
-const DEMO_WORKOUTS = [
-  {id:1,title:"20-Min HIIT Burn",source:"Instagram",tag:"HIIT",emoji:"🔥",duration:20,level:"Intermediate",youtubeId:null,influencer:"@fitbyjess",isOwn:false,notes:"No equipment needed. Keep heart rate above 75% max. Rest 20s between sets.",exerciseList:[{name:"Jump Squats",sets:"4",reps:"15",rest:"20s",weight:""},{name:"Burpees",sets:"3",reps:"10",rest:"30s",weight:""},{name:"High Knees",sets:"4",reps:"30s",rest:"15s",weight:""},{name:"Mountain Climbers",sets:"3",reps:"20",rest:"20s",weight:""},{name:"Lateral Jumps",sets:"3",reps:"12",rest:"20s",weight:""},{name:"Plank Jacks",sets:"3",reps:"20",rest:"15s",weight:""},{name:"Tuck Jumps",sets:"3",reps:"10",rest:"30s",weight:""},{name:"Sprint in Place",sets:"4",reps:"30s",rest:"10s",weight:""}]},
-  {id:2,title:"Glute & Hamstring Focus",source:"TikTok",tag:"Strength",emoji:"💪",duration:35,level:"Beginner",youtubeId:null,influencer:"@laurenfit",isOwn:false,notes:"Use a resistance band. Hip thrusts are the anchor movement.",exerciseList:[{name:"Hip Thrusts",sets:"4",reps:"12",rest:"45s",weight:"135lb"},{name:"Romanian Deadlifts",sets:"3",reps:"10",rest:"60s",weight:"95lb"},{name:"Glute Bridges",sets:"4",reps:"15",rest:"30s",weight:""},{name:"Sumo Squats",sets:"3",reps:"12",rest:"45s",weight:"50lb"},{name:"Donkey Kicks",sets:"3",reps:"15",rest:"20s",weight:""},{name:"Fire Hydrants",sets:"3",reps:"15",rest:"20s",weight:""}]},
-];
+const DEMO_WORKOUTS = [];
 
-const DEMO_HISTORY = [
-  {id:101,workoutId:1,workoutTitle:"20-Min HIIT Burn",date:new Date(Date.now()-86400000*2).toISOString(),duration:1240,totalVolume:0,exercises:[{name:"Jump Squats",sets:[{reps:"15",weight:"",done:true},{reps:"15",weight:"",done:true},{reps:"14",weight:"",done:true}]},{name:"Burpees",sets:[{reps:"10",weight:"",done:true},{reps:"9",weight:"",done:true}]}]},
-  {id:102,workoutId:2,workoutTitle:"Glute & Hamstring Focus",date:new Date(Date.now()-86400000*5).toISOString(),duration:2100,totalVolume:6480,exercises:[{name:"Hip Thrusts",sets:[{reps:"12",weight:"135",done:true},{reps:"12",weight:"135",done:true},{reps:"10",weight:"145",done:true}]},{name:"Romanian Deadlifts",sets:[{reps:"10",weight:"95",done:true},{reps:"10",weight:"95",done:true}]}]},
-];
+const DEMO_HISTORY = [];
 
 // ── YouTube search hook ───────────────────────────────────────────
 const videoCache = {};
@@ -364,8 +358,8 @@ const VideoOverlay = ({ exercise, onClose }) => {
 // ── Main App ──────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("home");
-  const [workouts, setWorkouts] = useState(DEMO_WORKOUTS);
-  const [history, setHistory] = useState(DEMO_HISTORY);
+  const [workouts, setWorkouts] = useState(()=>{try{const s=localStorage.getItem("sl_workouts");return s?JSON.parse(s):[];}catch{return[];}});
+const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl_history");return s?JSON.parse(s):[];}catch{return[];}});
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [importUrl, setImportUrl] = useState("");
   const [importCaption, setImportCaption] = useState("");
@@ -393,7 +387,8 @@ export default function App() {
     ...workouts.flatMap(w=>w.exerciseList.map(ex=>({...ex,workoutId:w.id,workoutTitle:w.title,influencer:w.influencer||w.source,muscleGroup:getMG(ex.name),isOwn:false}))),
     ...ownExercises.map(ex=>({...ex,workoutId:"own",workoutTitle:"My Exercises",influencer:"You",isOwn:true,sets:ex.defaultSets,reps:ex.defaultReps,weight:ex.defaultWeight})),
   ].filter((ex,i,arr)=>arr.findIndex(e=>e.name===ex.name&&e.workoutId===ex.workoutId)===i);
-
+useEffect(()=>{try{localStorage.setItem("sl_workouts",JSON.stringify(workouts));}catch{}},[workouts]);
+useEffect(()=>{try{localStorage.setItem("sl_history",JSON.stringify(history));}catch{}},[history]);
   const showToast = msg=>{setToast({show:true,msg});setTimeout(()=>setToast({show:false,msg:""}),2200);};
 
   useEffect(()=>{
@@ -614,6 +609,7 @@ Return ONLY the JSON.`;
           <div className="row2">
             <button className="btn ghost" onClick={()=>{setBuilderMode(true);setCustomExercises([...(w.exerciseList||[])]);setCustomName(`${w.title} (remix)`);setTab("library");}}>✦ Remix</button>
             <button className="btn ghost" onClick={()=>setTab("progress")}>📊 Progress</button>
+            <button className="btn" style={{background:C.red,marginTop:4}} onClick={()=>{if(window.confirm("Delete this workout?")){{setWorkouts(p=>p.filter(x=>x.id!==w.id));setTab("home");}}}}>🗑 Delete Workout</button>
           </div>
         </div>
       </div>
