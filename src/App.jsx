@@ -499,7 +499,7 @@ Return ONLY the JSON.`;
 
   // ── Screens ────────────────────────────────────────────────────
 
- const HomeScreen=()=>{
+ const renderHome=()=>{
   const filtered=workouts.filter(w=>
     w.title?.toLowerCase().includes(search.toLowerCase())||
     w.tag?.toLowerCase().includes(search.toLowerCase())||
@@ -988,7 +988,7 @@ const renderMain=()=>{
     if(tab==="import") return <ImportScreen/>;
     if(tab==="library") return <LibraryScreen/>;
     if(tab==="progress") return <ProgressScreen/>;
-    return <HomeScreen/>;
+    return renderHome();
   };
 
   return(
