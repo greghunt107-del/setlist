@@ -603,13 +603,6 @@ Return ONLY the JSON.`;
           <div className="stcell"><div className="stval">{logs.length}</div><div className="stlbl">Times Done</div></div>
         </div>
         {w.notes&&<div className="notesbox"><div className="noteslbl">Coach Notes</div>{w.notes}</div>}
-
-        {YT_API_KEY==="AIzaSyBGR6rOV-dq7MsmC1SCfvG4v-ynsc1tZqo"&&(
-          <div className="api-banner" style={{margin:"0 15px 13px"}}>
-            ⚡ Demo videos are using curated fallbacks. Add your YouTube API key to get live search results for any exercise.
-          </div>
-        )}
-
         <div style={{padding:"0 15px 9px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div className="sh" style={{margin:0}}>Exercises</div>
           <span style={{fontSize:10,color:C.muted}}>Tap ▶ for demo video</span>
