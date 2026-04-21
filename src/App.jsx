@@ -379,6 +379,7 @@ const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl
   const [timerSec, setTimerSec] = useState(0);
   const [expandedEx, setExpandedEx] = useState(0);
   const [videoOverlay, setVideoOverlay] = useState(null); // exercise obj
+  const [showCompletion, setShowCompletion] = useState(null);
   const [openVideos, setOpenVideos] = useState({}); // {exName: bool} for detail screen drawers
   const timerRef = useRef(null);
   const fileRef = useRef();
@@ -456,12 +457,13 @@ Return ONLY the JSON.`;
     setActiveWorkout(prev=>{const ex=[...prev.exercises];ex[ei]={...ex[ei],sets:[...ex[ei].sets,{setNum:ex[ei].sets.length+1,reps:"",weight:"",time:"",done:false}]};return{...prev,exercises:ex};});
   };
 
-  const finishWorkout=()=>{
+ const finishWorkout=()=>{
     if(!activeWorkout) return;
     const vol=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).reduce((b,s)=>{const r=parseFloat(s.reps)||0,w=parseFloat(s.weight)||1;return b+(r*w);},0),0);
     const log={id:Date.now(),workoutId:activeWorkout.workoutId,workoutTitle:activeWorkout.workoutTitle,date:new Date().toISOString(),duration:timerSec,totalVolume:Math.round(vol),exercises:activeWorkout.exercises};
-    setHistory(p=>[log,...p]);setActiveWorkout(null);setVideoOverlay(null);setTab("progress");
-    showToast("Workout logged! 🎉");
+    setHistory(p=>[log,...p]);
+    setShowCompletion({title:activeWorkout.workoutTitle,duration:timerSec,volume:Math.round(vol),sets:activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0),exercises:activeWorkout.exercises.length});
+    setActiveWorkout(null);setVideoOverlay(null);
   };
 
   const saveOwnExercise=()=>{
@@ -931,7 +933,38 @@ Return ONLY the JSON.`;
     </div>
   );
 };
- const renderMain=()=>{
+ const CompletionScreen=()=>{
+  const c=showCompletion;
+  const [dots]=useState(()=>Array.from({length:40},(_,i)=>({id:i,x:Math.random()*100,delay:Math.random()*0.8,dur:1.2+Math.random()*1.2,color:["#2A8FEF","#22C97A","#F5C842","#FF5A5A","#A855F7"][Math.floor(Math.random()*5)],size:4+Math.random()*8})));
+  useEffect(()=>{if(window.navigator.vibrate)window.navigator.vibrate([100,50,100]);},[]);
+  return(
+    <div style={{position:"fixed",inset:0,background:C.bg,zIndex:300,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"80px 28px 60px",textAlign:"center",overflow:"hidden"}}>
+      <style>{`@keyframes confetti{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}@keyframes popIn{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}`}</style>
+      {dots.map(d=>(
+        <div key={d.id} style={{position:"absolute",left:`${d.x}%`,top:-20,width:d.size,height:d.size,borderRadius:d.size>8?4:50,background:d.color,animation:`confetti ${d.dur}s ${d.delay}s ease-in forwards`,pointerEvents:"none"}}/>
+      ))}
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,animation:"popIn .5s ease forwards"}}>
+        <div style={{fontSize:80}}>🎉</div>
+        <div>
+          <div style={{fontFamily:"'Syne',sans-serif",fontSize:28,fontWeight:800,marginBottom:8}}>Workout Complete!</div>
+          <div style={{fontSize:14,color:C.muted}}>{c.title}</div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,width:"100%",marginTop:8}}>
+          {[["⏱",fmtTime(c.duration),"Duration"],["🏋️",c.exercises,"Exercises"],["✅",c.sets,"Sets Done"],["🔥",c.volume>0?`${c.volume}lb`:"—","Volume"]].map(([icon,val,lbl])=>(
+            <div key={lbl} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:"14px 10px"}}>
+              <div style={{fontSize:22,marginBottom:4}}>{icon}</div>
+              <div style={{fontFamily:"'Syne',sans-serif",fontSize:22,fontWeight:800,color:C.blueBright}}>{val}</div>
+              <div style={{fontSize:10,color:C.muted,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",marginTop:2}}>{lbl}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <button className="btn" onClick={()=>{setShowCompletion(null);setTab("progress");}}>View Progress 📊</button>
+    </div>
+  );
+};
+const renderMain=()=>{
+  if(showCompletion) return <CompletionScreen/>;
     if(!onboarded) return <OnboardingScreen/>;
     if(tab==="active") return <ActiveWorkoutScreen/>;
     if(tab==="active") return <ActiveWorkoutScreen/>;
