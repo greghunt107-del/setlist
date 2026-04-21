@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 // ─── REPLACE THIS WITH YOUR YOUTUBE DATA API v3 KEY ───────────────
-const YT_API_KEY = "YOUR_YOUTUBE_API_KEY_HERE";
+const YT_API_KEY = "AIzaSyBGR6rOV-dq7MsmC1SCfvG4v-ynsc1tZqo";
 // Get it free at: console.cloud.google.com → Enable "YouTube Data API v3"
 // ──────────────────────────────────────────────────────────────────
 
@@ -293,7 +293,7 @@ const useExerciseVideo = (exerciseName) => {
     if (!exerciseName) return;
     if (videoCache[exerciseName]) { setVideoId(videoCache[exerciseName].id); setTitle(videoCache[exerciseName].title); return; }
     // Use fallback if no real API key
-    if (!YT_API_KEY || YT_API_KEY === "YOUR_YOUTUBE_API_KEY_HERE") {
+    if (!YT_API_KEY || YT_API_KEY === "AIzaSyBGR6rOV-dq7MsmC1SCfvG4v-ynsc1tZqo") {
       const fallback = YT_FALLBACKS[exerciseName];
       if (fallback) { setVideoId(fallback); setTitle(`${exerciseName} — proper form`); videoCache[exerciseName] = {id:fallback,title:`${exerciseName} — proper form`}; }
       return;
@@ -443,8 +443,10 @@ Return ONLY valid JSON (no markdown):
 {"title":"Name","tag":"HIIT|Strength|Cardio|Yoga|Core|Full Body","duration":25,"level":"Beginner|Intermediate|Advanced","influencer":"@handle","source":"Instagram|TikTok|YouTube|Other","notes":"tips","exerciseList":[{"name":"Exercise","sets":"3","reps":"12","rest":"30s","weight":"","notes":"form tip"}]}
 Return ONLY the JSON.`;
     try{
-      const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:importUrl,caption:importCaption})});
-      const parsed=await res.json();
+      const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:importude-sonnet-4-5",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+      const data=await res.json();
+      const text=data.content?.[0]?.text||data.content?.find(b=>b.type==="text")?.text||"";
+      const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
       const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,youtubeId:parsed.videoId||null};
       setWorkouts(p=>[nw,...p]);
       setImportUrl("");setImportCaption("");setLoading(false);
@@ -597,7 +599,7 @@ Return ONLY the JSON.`;
         </div>
         {w.notes&&<div className="notesbox"><div className="noteslbl">Coach Notes</div>{w.notes}</div>}
 
-        {YT_API_KEY==="YOUR_YOUTUBE_API_KEY_HERE"&&(
+        {YT_API_KEY==="AIzaSyBGR6rOV-dq7MsmC1SCfvG4v-ynsc1tZqo"&&(
           <div className="api-banner" style={{margin:"0 15px 13px"}}>
             ⚡ Demo videos are using curated fallbacks. Add your YouTube API key to get live search results for any exercise.
           </div>
