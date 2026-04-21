@@ -58,10 +58,10 @@ body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-hei
 .pill.hi{border-color:${C.blueBright}44;color:${C.blueBright}}
 .pill.grn{border-color:${C.green}44;color:${C.green}}
 
-.hscroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch}
+.hscroll{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;margin-bottom:18px}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch}
 .hscroll::-webkit-scrollbar{display:none}
-.scard{background:${C.card};border:1px solid ${C.border};border-radius:14px;padding:13px 15px;min-width:105px;flex-shrink:0}
-.sval{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:${C.blueBright}}
+.scard{background:${C.card};border:1px solid ${C.border};border-radius:14px;padding:10px 8px;min-width:0;width:100%}
+sval{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${C.blueBright}}
 .slbl{font-size:9px;color:${C.muted};font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
 
 .flbl{font-size:10px;font-weight:700;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
