@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 // ─── REPLACE THIS WITH YOUR YOUTUBE DATA API v3 KEY ───────────────
-const YT_API_KEY = "AIzaSyBGR6rOV-dq7MsmC1SCfvG4v-ynsc1tZqo";
+const YT_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 // Get it free at: console.cloud.google.com → Enable "YouTube Data API v3"
 // ──────────────────────────────────────────────────────────────────
 
@@ -293,7 +293,7 @@ const useExerciseVideo = (exerciseName) => {
     if (!exerciseName) return;
     if (videoCache[exerciseName]) { setVideoId(videoCache[exerciseName].id); setTitle(videoCache[exerciseName].title); return; }
     // Use fallback if no real API key
-    if (!YT_API_KEY || YT_API_KEY === "AIzaSyBGR6rOV-dq7MsmC1SCfvG4v-ynsc1tZqo") {
+    if (!YT_API_KEY || YT_API_KEY === "YOUR_YOUTUBE_API_KEY_HERE") {
       const fallback = YT_FALLBACKS[exerciseName];
       if (fallback) { setVideoId(fallback); setTitle(`${exerciseName} — proper form`); videoCache[exerciseName] = {id:fallback,title:`${exerciseName} — proper form`}; }
       return;
