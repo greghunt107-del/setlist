@@ -358,6 +358,7 @@ const VideoOverlay = ({ exercise, onClose }) => {
 // ── Main App ──────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("home");
+  const [onboarded, setOnboarded] = useState(()=>{try{return localStorage.getItem("sl_onboarded")==="1";}catch{return false;}});
   const [workouts, setWorkouts] = useState(()=>{try{const s=localStorage.getItem("sl_workouts");return s?JSON.parse(s):[];}catch{return[];}});
 const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl_history");return s?JSON.parse(s):[];}catch{return[];}});
   const [selectedWorkout, setSelectedWorkout] = useState(null);
@@ -389,6 +390,7 @@ const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl
   ].filter((ex,i,arr)=>arr.findIndex(e=>e.name===ex.name&&e.workoutId===ex.workoutId)===i);
 useEffect(()=>{try{localStorage.setItem("sl_workouts",JSON.stringify(workouts));}catch{}},[workouts]);
 useEffect(()=>{try{localStorage.setItem("sl_history",JSON.stringify(history));}catch{}},[history]);
+const completeOnboarding=()=>{try{localStorage.setItem("sl_onboarded","1");}catch{}setOnboarded(true);};
   const showToast = msg=>{setToast({show:true,msg});setTimeout(()=>setToast({show:false,msg:""}),2200);};
 
   useEffect(()=>{
@@ -894,7 +896,44 @@ Return ONLY the JSON.`;
     </div>
   );
 
-  const renderMain=()=>{
+  const OnboardingScreen=()=>{
+  const [slide,setSlide]=useState(0);
+  const slides=[
+    {emoji:"🏋️",title:"Welcome to SetList",sub:"Your personal workout library.\nImport any workout from Instagram,\nTikTok, or YouTube in seconds."},
+    {emoji:"⚡",title:"How It Works",sub:"Share a post link or paste a caption.\nOur AI breaks down every exercise,\nset, rep, and rest automatically."},
+    {emoji:"🔥",title:"Build Your Library",sub:"Save workouts, track your progress,\nbuild custom routines, and\nnever lose a workout again."},
+  ];
+  const s=slides[slide];
+  return(
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"60px 28px 48px",textAlign:"center",background:C.bg}}>
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24}}>
+        <div style={{width:120,height:120,borderRadius:32,background:`linear-gradient(135deg,${C.blue}44,${C.blueBright}22)`,border:`1px solid ${C.borderHi}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:56}}>{s.emoji}</div>
+        <div>
+          <div style={{fontFamily:"'Syne',sans-serif",fontSize:26,fontWeight:800,letterSpacing:"-.5px",marginBottom:12,color:C.text}}>{s.title}</div>
+          <div style={{fontSize:14,color:C.muted,lineHeight:1.7,whiteSpace:"pre-line"}}>{s.sub}</div>
+        </div>
+        <div style={{display:"flex",gap:7,marginTop:8}}>
+          {slides.map((_,i)=>(
+            <div key={i} style={{width:i===slide?24:7,height:7,borderRadius:4,background:i===slide?C.blueBright:C.border,transition:"all .3s"}}/>
+          ))}
+        </div>
+      </div>
+      <div style={{width:"100%",display:"flex",flexDirection:"column",gap:10}}>
+        {slide<slides.length-1?(
+          <>
+            <button className="btn" onClick={()=>setSlide(s=>s+1)}>Continue →</button>
+            <button className="btn ghost" onClick={completeOnboarding} style={{padding:11,fontSize:12,color:C.muted}}>Skip</button>
+          </>
+        ):(
+          <button className="btn" onClick={completeOnboarding}>Get Started 🔥</button>
+        )}
+      </div>
+    </div>
+  );
+};
+ const renderMain=()=>{
+    if(!onboarded) return <OnboardingScreen/>;
+    if(tab==="active") return <ActiveWorkoutScreen/>;
     if(tab==="active") return <ActiveWorkoutScreen/>;
     if(tab==="detail") return <DetailScreen/>;
     if(tab==="import") return <ImportScreen/>;
