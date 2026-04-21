@@ -613,7 +613,7 @@ Return ONLY the JSON.`;
                   </div>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
                     {analytics.prByExercise[ex.name]&&<div style={{fontSize:10,color:C.gold,fontWeight:700}}>PR {analytics.prByExercise[ex.name]}lb</div>}
-                    <div className={`ex-vid-btn ${vidOpen?"":""}` } onClick={()=>setOpenVideos(p=>({...p,[ex.name]:!p[ex.name]}))}>
+                    <div className={`ex-vid-btn ${vidOpen?"":""}` } onClick={e=>{e.preventDefault();e.stopPropagation();const el=e.currentTarget;setOpenVideos(p=>({...p,[ex.name]:!p[ex.name]}));setTimeout(()=>el.scrollIntoView({behavior:"smooth",block:"nearest"}),50);}}>
                       {vidOpen?"▼ Hide":"▶ Demo"}
                     </div>
                   </div>
