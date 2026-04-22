@@ -378,6 +378,8 @@ export default function App() {
   const [expandedEx, setExpandedEx] = useState(0);
   const [videoOverlay, setVideoOverlay] = useState(null);
   const [showCompletion, setShowCompletion] = useState(null);
+  const [pendingWorkout, setPendingWorkout] = useState(null);
+  const [pendingWorkout, setPendingWorkout] = useState(null);
   const [openVideos, setOpenVideos] = useState({});
   const timerRef = useRef(null);
   const fileRef = useRef();
@@ -420,10 +422,8 @@ export default function App() {
         parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
       }
       const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:parsed.videoId||null,youtubeId:parsed.videoId||null};
-      setWorkouts(p=>[nw,...p]);
       setImportUrl("");setImportCaption("");setLoading(false);
-      setSelectedWorkout(nw);setTab("detail");
-      showToast("Workout added to SetList ✓");
+      setPendingWorkout(nw);setTab("review");
     }catch(e){console.error("Analysis error:",e);setLoading(false);showToast("Analysis failed — try again");}
   };
 
@@ -967,6 +967,88 @@ export default function App() {
     );
   };
 
+  const ReviewScreen=()=>{
+    const [draft, setDraft] = useState(pendingWorkout);
+    if(!draft) return null;
+
+    const updateField=(field,val)=>setDraft(p=>({...p,[field]:val}));
+    const updateExercise=(i,field,val)=>setDraft(p=>({...p,exerciseList:p.exerciseList.map((ex,j)=>j===i?{...ex,[field]:val}:ex)}));
+    const removeExercise=i=>setDraft(p=>({...p,exerciseList:p.exerciseList.filter((_,j)=>j!==i)}));
+    const addExercise=()=>setDraft(p=>({...p,exerciseList:[...p.exerciseList,{name:"New Exercise",sets:"3",reps:"10",rest:"60s",weight:"",notes:""}]}));
+    const saveWorkout=()=>{
+      setWorkouts(p=>[draft,...p]);
+      setPendingWorkout(null);
+      setSelectedWorkout(draft);
+      setTab("detail");
+      showToast("Workout saved ✓");
+    };
+
+    return(
+      <div className="dtwrap">
+        <div className="dthdr">
+          <div className="backbtn" onClick={()=>{setPendingWorkout(null);setTab("import");}}>←</div>
+          <div className="dttitle">Review Workout</div>
+          <div style={{fontSize:11,color:C.blueBright,fontWeight:700,cursor:"pointer"}} onClick={saveWorkout}>Save ✓</div>
+        </div>
+        {draft.videoId&&(
+          <div className="videoarea">
+            <iframe src={`https://www.youtube.com/embed/${draft.videoId}?rel=0&modestbranding=1`} allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"/>
+          </div>
+        )}
+        <div style={{padding:"13px 15px",display:"flex",flexDirection:"column",gap:10}}>
+          <div>
+            <div className="flbl">Workout Title</div>
+            <input className="tinput" value={draft.title} onChange={e=>updateField("title",e.target.value)}/>
+          </div>
+          <div style={{display:"flex",gap:9}}>
+            <div style={{flex:1}}>
+              <div className="flbl">Type</div>
+              <select className="tinput" value={draft.tag} onChange={e=>updateField("tag",e.target.value)}>
+                {["HIIT","Strength","Cardio","Yoga","Core","Full Body"].map(t=><option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div style={{flex:1}}>
+              <div className="flbl">Level</div>
+              <select className="tinput" value={draft.level} onChange={e=>updateField("level",e.target.value)}>
+                {["Beginner","Intermediate","Advanced"].map(t=><option key={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{background:`${C.gold}18`,border:`1px solid ${C.gold}44`,borderRadius:11,padding:"9px 13px",fontSize:11,color:C.gold,lineHeight:1.5}}>
+            ✏️ Review and fix any exercises below before saving. AI may not be perfect.
+          </div>
+        </div>
+        <div style={{padding:"0 15px 9px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div className="sh" style={{margin:0}}>Exercises · {draft.exerciseList?.length}</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8,padding:"0 15px"}}>
+          {draft.exerciseList?.map((ex,i)=>(
+            <div key={i} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:15,padding:"12px 13px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <div style={{fontSize:20}}>{EMO[ex.name]||"💪"}</div>
+                <input className="tinput" value={ex.name} onChange={e=>updateExercise(i,"name",e.target.value)} style={{flex:1,padding:"7px 11px",fontSize:13,fontWeight:700}}/>
+                <div className="rmbtn" onClick={()=>removeExercise(i)}>×</div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:7}}>
+                {[["Sets",ex.sets,"sets"],["Reps",ex.reps,"reps"],["Rest",ex.rest,"rest"],["Weight",ex.weight,"weight"]].map(([lbl,val,field])=>(
+                  <div key={field}>
+                    <div style={{fontSize:8,color:C.muted,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:3}}>{lbl}</div>
+                    <input className="tinput" value={val||""} onChange={e=>updateExercise(i,field,e.target.value)} style={{padding:"6px 8px",fontSize:12,textAlign:"center"}}/>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div style={{background:C.surface,border:`1.5px dashed ${C.border}`,borderRadius:13,padding:"12px",textAlign:"center",cursor:"pointer",fontSize:13,color:C.muted,fontWeight:700}} onClick={addExercise}>
+            + Add Exercise
+          </div>
+        </div>
+        <div style={{padding:15}}>
+          <button className="btn" onClick={saveWorkout}>Save Workout ✓</button>
+        </div>
+      </div>
+    );
+  };
   const CompletionScreen=()=>{
     const c=showCompletion;
     const [dots]=useState(()=>Array.from({length:40},(_,i)=>({id:i,x:Math.random()*100,delay:Math.random()*0.8,dur:1.2+Math.random()*1.2,color:["#2A8FEF","#22C97A","#F5C842","#FF5A5A","#A855F7"][Math.floor(Math.random()*5)],size:4+Math.random()*8})));
@@ -998,11 +1080,12 @@ export default function App() {
     );
   };
 
-  const renderMain=()=>{
+const renderMain=()=>{
     if(showCompletion) return <CompletionScreen/>;
     if(!onboarded) return <OnboardingScreen/>;
     if(tab==="active") return <ActiveWorkoutScreen/>;
     if(tab==="detail") return <DetailScreen/>;
+    if(tab==="review") return <ReviewScreen/>;
     if(tab==="import") return <ImportScreen/>;
     if(tab==="library") return <LibraryScreen/>;
     if(tab==="progress") return <ProgressScreen/>;
