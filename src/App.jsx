@@ -1029,7 +1029,7 @@ export default function App() {
                 <div className="rmbtn" onClick={()=>removeExercise(i)}>×</div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:7}}>
-                {[["Sets",ex.sets,"sets"],["Reps",ex.reps,"reps"],["Rest",ex.rest,"rest"],["Weight",ex.weight,"weight"]].map(([lbl,val,field])=>(
+                {[["Sets",ex.sets||ex.Sets,"sets"],["Reps",ex.reps||ex.Reps,"reps"],["Rest",ex.rest||ex.Rest,"rest"],["Weight",ex.weight||ex.Weight,"weight"]].map(([lbl,val,field])=>(
                   <div key={field}>
                     <div style={{fontSize:8,color:C.muted,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:3}}>{lbl}</div>
                     <input className="tinput" value={val||""} onChange={e=>updateExercise(i,field,e.target.value)} style={{padding:"6px 8px",fontSize:12,textAlign:"center"}}/>
