@@ -119,11 +119,11 @@ ${extractionRules}
 - Do NOT hallucinate exercises not present in the source material
 - Be specific: "Kettlebell Swing" not "Swing"
 - ALWAYS include sets as a number like "3" or "4"
-- ALWAYS include reps as a number or time like "12" or "30s" or "45 seconds"
-- ALWAYS include rest as a time like "30s" or "60s" or "90 seconds"
-- If sets/reps are not explicitly stated, make a reasonable estimate based on the workout type
+- ALWAYS include reps as a number like "12" or a time like "30s" if it's a timed exercise
+- ALWAYS include rest as a time like "30s" or "60s"
+- If sets/reps/rest are not explicitly stated, estimate based on workout type
 - NEVER leave sets, reps, or rest as empty strings
-Return ONLY valid JSON, no markdown, no explanation:
+- ALWAYS leave weight as an empty string — weight is logged by the user during the workout
 {
   "title": "workout name",
   "tag": "HIIT|Strength|Cardio|Yoga|Core|Full Body",
@@ -136,9 +136,9 @@ Return ONLY valid JSON, no markdown, no explanation:
     {
       "name": "Exercise Name",
       "sets": "3",
-      "reps": "12",
+      "reps": "12 or 30s if timed",
       "rest": "30s",
-      "weight": "kettlebell or empty string",
+      "weight": "",
       "notes": "form tip"
     }
   ]
