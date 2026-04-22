@@ -379,7 +379,6 @@ export default function App() {
   const [videoOverlay, setVideoOverlay] = useState(null);
   const [showCompletion, setShowCompletion] = useState(null);
   const [pendingWorkout, setPendingWorkout] = useState(null);
-  const [pendingWorkout, setPendingWorkout] = useState(null);
   const [openVideos, setOpenVideos] = useState({});
   const timerRef = useRef(null);
   const fileRef = useRef();
