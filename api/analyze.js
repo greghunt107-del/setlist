@@ -122,6 +122,10 @@ ${extractionRules}
 - ALWAYS include reps as a number like "12" or a time like "30s" if it's a timed exercise
 - ALWAYS include rest as a time like "30s" or "60s"
 - If sets/reps/rest are not explicitly stated, estimate based on workout type
+- Extract ALL exercises from the transcript — do not stop at 5 or any arbitrary limit
+- If the video has 10 exercises, return all 10
+- If the video has 20 exercises, return all 20
+- Never truncate the exercise list
 - NEVER leave sets, reps, or rest as empty strings
 - ALWAYS leave weight as an empty string — weight is logged by the user during the workout
 {
@@ -153,7 +157,7 @@ ${extractionRules}
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 2000,
+        max_tokens: 4000,
         system: 'You are a fitness coach AI. Always respond with valid JSON only. No markdown. No explanation. No extra text.',
         messages: [{ role: 'user', content: prompt }]
       })
