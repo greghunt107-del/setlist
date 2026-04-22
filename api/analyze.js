@@ -118,7 +118,11 @@ ${extractionRules}
 - If weight is mentioned, include it
 - Do NOT hallucinate exercises not present in the source material
 - Be specific: "Kettlebell Swing" not "Swing"
-
+- ALWAYS include sets as a number like "3" or "4"
+- ALWAYS include reps as a number or time like "12" or "30s" or "45 seconds"
+- ALWAYS include rest as a time like "30s" or "60s" or "90 seconds"
+- If sets/reps are not explicitly stated, make a reasonable estimate based on the workout type
+- NEVER leave sets, reps, or rest as empty strings
 Return ONLY valid JSON, no markdown, no explanation:
 {
   "title": "workout name",
