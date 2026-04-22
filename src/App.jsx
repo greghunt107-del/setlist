@@ -123,7 +123,7 @@ select.tinput{appearance:none;cursor:pointer}
 .vid-title{font-size:11px;font-weight:600;color:${C.accentDim};flex:1;line-height:1.3}
 .vid-src{font-size:10px;color:${C.muted}}
 
-.awrap{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:8px}
+.awrap{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:80px;-webkit-overflow-scrolling:touch}
 .ahdr{padding:52px 15px 11px;display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:10;background:${C.bg}EE;backdrop-filter:blur(14px);border-bottom:1px solid ${C.border}}
 .atimer{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:${C.blueBright};background:${C.blueGlow};padding:5px 11px;border-radius:9px;border:1px solid ${C.borderHi}}
 .prog-bar-bg{height:4px;background:${C.border};border-radius:4px;margin:0 15px 14px;overflow:hidden}
@@ -144,7 +144,7 @@ select.tinput{appearance:none;cursor:pointer}
 
 .aex-card{margin:0 15px 11px;background:${C.card};border:1px solid ${C.border};border-radius:17px;overflow:hidden;transition:border-color .2s}
 .aex-header{padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
-.aex-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;flex:1}
+.aex-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .aex-status{font-size:11px;color:${C.muted};font-weight:600}
 .aex-done{color:${C.green};font-weight:700}
 
@@ -156,7 +156,7 @@ select.tinput{appearance:none;cursor:pointer}
 .set-rows{padding:0 14px 14px;display:flex;flex-direction:column;gap:7px}
 .set-row{background:${C.surface};border:1px solid ${C.border};border-radius:11px;padding:10px 12px;display:grid;grid-template-columns:28px 1fr 1fr 1fr 36px;gap:8px;align-items:center}
 .set-lbl{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:${C.muted};text-align:center}
-.set-input{background:${C.card};border:1px solid ${C.border};border-radius:8px;padding:6px 4px;color:${C.text};font-family:'DM Mono',monospace;font-size:13px;width:100%;outline:none;text-align:center;transition:border-color .2s}
+.set-input{background:${C.card};border:1px solid ${C.border};border-radius:8px;padding:6px 4px;color:${C.text};font-family:'DM Mono',monospace;font-size:13px;width:100%;outline:none;text-align:center;transition:border-color .2s;-webkit-user-select:text;user-select:text}
 .set-input:focus{border-color:${C.blueBright}66}
 .set-col-lbl{font-size:9px;color:${C.muted};font-weight:700;letter-spacing:.5px;text-transform:uppercase;text-align:center}
 .set-check{width:30px;height:30px;border-radius:9px;background:${C.card};border:1.5px solid ${C.border};display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .15s}
@@ -432,9 +432,9 @@ export default function App() {
     setActiveWorkout(session);setExpandedEx(0);setTab("active");
   };
 
-  const updateSet=(ei,si,field,val)=>{
-    setActiveWorkout(prev=>{const ex=[...prev.exercises];ex[ei]={...ex[ei],sets:ex[ei].sets.map((s,i)=>i===si?{...s,[field]:val}:s)};return{...prev,exercises:ex};});
-  };
+  const updateSet=useCallback((ei,si,field,val)=>{
+    setActiveWorkout(prev=>{const ex=prev.exercises.map((e,i)=>i===ei?{...e,sets:e.sets.map((s,j)=>j===si?{...s,[field]:val}:s)}:e);return{...prev,exercises:ex};});
+  },[]);
 
   const toggleSetDone=(ei,si)=>{
     setActiveWorkout(prev=>{
@@ -706,9 +706,9 @@ export default function App() {
                       {ex.sets.map((s,si)=>(
                         <div key={si} className="set-row" style={{background:s.done?`${C.green}0A`:C.surface,borderColor:s.done?`${C.green}33`:C.border}}>
                           <div className="set-lbl">S{si+1}</div>
-                          <input className="set-input" placeholder="—" value={s.reps} onChange={e=>updateSet(ei,si,"reps",e.target.value)}/>
-                          <input className="set-input" placeholder="lb" value={s.weight} onChange={e=>updateSet(ei,si,"weight",e.target.value)}/>
-                          <input className="set-input" placeholder="—" value={s.time||""} onChange={e=>updateSet(ei,si,"time",e.target.value)}/>
+                          <input className="set-input" placeholder="—" value={s.reps} onChange={e=>updateSet(ei,si,"reps",e.target.value)} inputMode="decimal" autoComplete="off"/>
+                          <input className="set-input" placeholder="lb" value={s.weight} onChange={e=>updateSet(ei,si,"weight",e.target.value)} inputMode="decimal" autoComplete="off"/>
+                          <input className="set-input" placeholder="—" value={s.time||""} onChange={e=>updateSet(ei,si,"time",e.target.value)} inputMode="decimal" autoComplete="off"/>
                           <div className={`set-check ${s.done?"done":""}`} onClick={()=>toggleSetDone(ei,si)}>{s.done?"✓":"○"}</div>
                         </div>
                       ))}
