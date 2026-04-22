@@ -543,35 +543,60 @@ Return ONLY the JSON.`;
   );
 };
 
-  const ImportScreen=()=>(
-    <div className="con">
-      {loading?(
-        <div className="loading-wrap">
-          <div className="wl">{[1,2,3,4,5].map(i=><div key={i} className="wb"/>)}</div>
-          <div style={{fontFamily:"'Syne',sans-serif",fontSize:19,fontWeight:800}}>Analyzing Workout</div>
-          <div style={{fontSize:13,color:C.muted,lineHeight:1.5}}>AI is extracting every exercise.</div>
+  const ImportScreen=()=>{
+  const isInstagramOrTikTok = importUrl && (importUrl.includes("instagram.com") || importUrl.includes("tiktok.com"));
+  const canAnalyze = (importUrl || importCaption) && (!isInstagramOrTikTok || importCaption.trim().length > 0);
+  return(
+    loading?(
+      <div className="loading-wrap">
+        <div className="wl">{[1,2,3,4,5].map(i=><div key={i} className="wb"/>)}</div>
+        <div style={{fontFamily:"'Syne',sans-serif",fontSize:19,fontWeight:800}}>Building Your Workout</div>
+        <div style={{fontSize:13,color:C.muted,lineHeight:1.5,textAlign:"center"}}>Extracting exercises from your content.</div>
+      </div>
+    ):(
+      <div className="con" style={{display:"flex",flexDirection:"column",gap:13}}>
+        <div style={{background:`linear-gradient(135deg,${C.blue}22,${C.blue}08)`,border:`1px solid ${C.borderHi}`,borderRadius:18,padding:17}}>
+          <div style={{fontFamily:"'Syne',sans-serif",fontSize:15,fontWeight:800,color:C.text,marginBottom:5}}>Turn any workout into a structured routine</div>
+          <div style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Paste a link and the workout description. SetList structures it into sets, reps, and rest periods you can use at the gym.</div>
         </div>
-      ):(
-        <div style={{display:"flex",flexDirection:"column",gap:13}}>
-          <div className="tipcard">
-            <div className="tiptitle">📲 Share from Instagram or TikTok</div>
-            {["Find the workout post","Tap Share → Copy Link","Paste below","Add caption → tap Analyze"].map((s,i)=>(
-              <div className="tipstep" key={i}><span className="tipn">{i+1}</span><span>{s}</span></div>
-            ))}
-          </div>
-          <div><div className="flbl">Post URL</div><input className="tinput" placeholder="https://www.instagram.com/p/..." value={importUrl} onChange={e=>setImportUrl(e.target.value)}/></div>
-          <div><div className="flbl">Caption / Description</div><textarea className="tinput" rows={4} placeholder="Paste caption or describe the workout..." value={importCaption} onChange={e=>setImportCaption(e.target.value)}/></div>
-          <div className="ubox" onClick={()=>fileRef.current?.click()}>
-            <div style={{fontSize:28,marginBottom:7}}>🎥</div>
-            <div style={{fontFamily:"'Syne',sans-serif",fontSize:15,fontWeight:700,marginBottom:4}}>Upload Video</div>
-            <div style={{fontSize:12,color:C.muted}}>Watch the original workout inside SetList</div>
-            <input ref={fileRef} type="file" accept="video/*" style={{display:"none"}} onChange={e=>{if(e.target.files[0])showToast("Video attached ✓");}}/>
-          </div>
-          <button className="btn" onClick={analyzeWithAI} disabled={!importUrl&&!importCaption}>⚡ Analyze Workout</button>
+
+        <div>
+          <div className="flbl">Post URL <span style={{color:C.muted,fontWeight:400,textTransform:"none",letterSpacing:0}}>(YouTube, Instagram, TikTok)</span></div>
+          <input className="tinput" placeholder="https://www.instagram.com/p/..." value={importUrl} onChange={e=>setImportUrl(e.target.value)}/>
+          {isInstagramOrTikTok&&(
+            <div style={{marginTop:7,background:`${C.gold}18`,border:`1px solid ${C.gold}44`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.gold,lineHeight:1.5}}>
+              📋 Instagram and TikTok links need a description for accurate results. Paste the caption below.
+            </div>
+          )}
         </div>
-      )}
-    </div>
+
+        <div>
+          <div className="flbl">Workout Description <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>← most important</span></div>
+          <textarea className="tinput" rows={5} placeholder={`Paste the caption, description, or type the workout yourself.\n\nExample:\n4x12 Kettlebell Swings\n3x10 Goblet Squats\n3x15 Romanian Deadlifts`} value={importCaption} onChange={e=>setImportCaption(e.target.value)}/>
+          <div style={{fontSize:10,color:C.muted,marginTop:5}}>💡 The more detail you paste, the more accurate your workout will be.</div>
+        </div>
+
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:13,padding:"11px 14px"}}>
+          <div style={{fontSize:10,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>How to get best results</div>
+          {[["YouTube","Paste the link — title and description pull in automatically ✓"],["Instagram","Paste link + copy the caption from the post"],["TikTok","Paste link + copy the caption or describe the workout yourself"],["No link","Just type or paste the workout directly into the description field"]].map(([p,t])=>(
+            <div key={p} style={{display:"flex",gap:9,marginBottom:6,fontSize:12,lineHeight:1.4}}>
+              <span style={{fontWeight:700,color:C.blueBright,minWidth:72,fontSize:11}}>{p}</span>
+              <span style={{color:C.accentDim}}>{t}</span>
+            </div>
+          ))}
+        </div>
+
+        <button className="btn" onClick={analyzeWithAI} disabled={!canAnalyze}>
+          ⚡ Build Workout
+        </button>
+        {isInstagramOrTikTok&&!importCaption.trim()&&(
+          <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add a description above to enable analysis</div>
+        )}
+      </div>
+    )
   );
+};
+
 
   const DetailScreen=()=>{
     const w=selectedWorkout;
