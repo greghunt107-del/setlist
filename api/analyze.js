@@ -97,7 +97,7 @@ console.log('TRANSCRIPT PREVIEW:', transcript.slice(0, 500));
 PLATFORM: ${platform}
 URL: ${url || 'none'}
 ${videoTitle ? `VIDEO TITLE: ${videoTitle}` : ''}
-${videoDescription ? `VIDEO DESCRIPTION: ${videoDescription.slice(0, 800)}` : ''}
+${videoDescription ? `VIDEO DESCRIPTION: ${videoDescription.slice(0, 3000)}` : ''}
 ${hasTranscript ? `FULL VIDEO TRANSCRIPT (most accurate source — use this above everything else):\n${transcript.slice(0, 4000)}` : ''}
 ${hasCaption ? `USER CAPTION (use this if transcript is missing): ${caption}` : ''}
 `.trim();
