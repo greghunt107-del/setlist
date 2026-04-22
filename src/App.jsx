@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-// ─── REPLACE THIS WITH YOUR YOUTUBE DATA API v3 KEY ───────────────
 const YT_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
-// Get it free at: console.cloud.google.com → Enable "YouTube Data API v3"
-// ──────────────────────────────────────────────────────────────────
 
 const C = {
   bg:"#060D1A", deep:"#0A1628", surface:"#0F1E35", card:"#162540",
@@ -18,7 +15,7 @@ const STYLES = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;overflow-x:hidden}
 body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
-.app{width:100%;max-width:430px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}margin:0 auto;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;position:relative}
+.app{width:100%;max-width:430px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .app::before{content:'';position:fixed;top:-180px;left:-80px;width:420px;height:420px;background:radial-gradient(circle,${C.blue}15 0%,transparent 70%);pointer-events:none;z-index:0}
 
 .hdr{padding:52px 18px 13px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;background:${C.bg}EE;backdrop-filter:blur(14px);border-bottom:1px solid ${C.border}}
@@ -29,14 +26,14 @@ body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-hei
 .ibtn{width:36px;height:36px;border-radius:10px;background:${C.card};border:1px solid ${C.border};color:${C.accentDim};display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .15s;flex-shrink:0}
 .ibtn:active{transform:scale(.92)}
 
-.nav{display:flex;justify-content:space-around;padding:7px 4px 28px;background:${C.deep}EE;backdrop-filter:blur(14px);border-top:1px solid ${C.border};z-index:60;width:100%;flex-shrink:0}padding:7px 4px 28px;background:${C.deep}EE;backdrop-filter:blur(14px);border-top:1px solid ${C.border};z-index:60;width:100%;flex-shrink:0}padding:7px 4px 28px;background:${C.deep}EE;backdrop-filter:blur(14px);border-top:1px solid ${C.border};position:sticky;bottom:0;z-index:60;width:100%;flex-shrink:0}
+.nav{display:flex;justify-content:space-around;padding:7px 4px 28px;background:${C.deep}EE;backdrop-filter:blur(14px);border-top:1px solid ${C.border};z-index:60;width:100%;flex-shrink:0}
 .ni{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:5px 12px;border-radius:12px;transition:all .15s;color:${C.muted};font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
 .ni.on{color:${C.text}}
 .ni.on .niw{background:${C.blueGlow};border-color:${C.borderHi};color:${C.blueBright}}
 .niw{width:40px;height:40px;border-radius:12px;background:transparent;border:1px solid transparent;display:flex;align-items:center;justify-content:center;font-size:19px;transition:all .2s;margin-bottom:1px}
 .ni:active{transform:scale(.92)}
 
-.con{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;padding-bottom:20px;position:relative;z-index:1;-webkit-overflow-scrolling:touch}padding:16px;padding-bottom:80px;position:relative;z-index:1}
+.con{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;padding-bottom:20px;position:relative;z-index:1;-webkit-overflow-scrolling:touch}
 .sh{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:${C.muted};text-transform:uppercase;margin-bottom:10px;margin-top:20px}
 .sh:first-child{margin-top:4px}
 .sh-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:20px}
@@ -58,10 +55,9 @@ body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-hei
 .pill.hi{border-color:${C.blueBright}44;color:${C.blueBright}}
 .pill.grn{border-color:${C.green}44;color:${C.green}}
 
-.hscroll{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;margin-bottom:18px}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch;max-width:calc(100vw - 0px)}padding-bottom:4px;padding-left:16px;padding-right:16px;margin:0 -16px;-webkit-overflow-scrolling:touch}
-.hscroll::-webkit-scrollbar{display:none}
+.hscroll{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;margin-bottom:18px}
 .scard{background:${C.card};border:1px solid ${C.border};border-radius:14px;padding:10px 8px;min-width:0;width:100%}
-sval{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${C.blueBright}}
+.sval{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${C.blueBright}}
 .slbl{font-size:9px;color:${C.muted};font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
 
 .flbl{font-size:10px;font-weight:700;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
@@ -233,25 +229,22 @@ select.tinput{appearance:none;cursor:pointer}
 .api-banner{background:${C.gold}18;border:1px solid ${C.gold}44;border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:11px;color:${C.gold};line-height:1.5;font-weight:600}
 `;
 
-// ── Static data ───────────────────────────────────────────────────
-const EMO = {"Jump Squats":"🦵","Burpees":"💥","High Knees":"🏃","Mountain Climbers":"⛰️","Lateral Jumps":"↔️","Plank Jacks":"🤸","Tuck Jumps":"⬆️","Sprint in Place":"⚡","Hip Thrusts":"🍑","Romanian Deadlifts":"🏋️","Glute Bridges":"🌉","Sumo Squats":"🦵","Donkey Kicks":"🦵","Fire Hydrants":"🔥","Push-Ups":"💪","Pull-Ups":"🔝","Dips":"⬇️","Rows":"🚣","Lunges":"🚶","Deadlifts":"🏋️","Bench Press":"🛋️","Squats":"🦵","Plank":"🧱","Crunches":"🔄","Leg Raises":"⬆️","Bicep Curls":"💪","Tricep Extensions":"💪","Shoulder Press":"🙌","Lat Pulldowns":"🔝"};
-const MG = {"Legs & Glutes":["Jump Squats","Hip Thrusts","Romanian Deadlifts","Glute Bridges","Sumo Squats","Donkey Kicks","Lateral Jumps","Lunges","Squats","Fire Hydrants"],"Core & Cardio":["Mountain Climbers","Plank Jacks","High Knees","Sprint in Place","Burpees","Tuck Jumps","Plank","Crunches","Leg Raises"],"Upper Body":["Push-Ups","Pull-Ups","Dips","Rows","Bench Press","Bicep Curls","Tricep Extensions","Shoulder Press","Lat Pulldowns"]};
+const EMO = {"Jump Squats":"🦵","Burpees":"💥","High Knees":"🏃","Mountain Climbers":"⛰️","Lateral Jumps":"↔️","Plank Jacks":"🤸","Tuck Jumps":"⬆️","Sprint in Place":"⚡","Hip Thrusts":"🍑","Romanian Deadlifts":"🏋️","Glute Bridges":"🌉","Sumo Squats":"🦵","Donkey Kicks":"🦵","Fire Hydrants":"🔥","Push-Ups":"💪","Pull-Ups":"🔝","Dips":"⬇️","Rows":"🚣","Lunges":"🚶","Deadlifts":"🏋️","Bench Press":"🛋️","Squats":"🦵","Plank":"🧱","Crunches":"🔄","Leg Raises":"⬆️","Bicep Curls":"💪","Tricep Extensions":"💪","Shoulder Press":"🙌","Lat Pulldowns":"🔝","Kettlebell Swings":"🔔","Kettlebell Deadlifts":"🔔","Goblet Squats":"🔔","Turkish Get-Ups":"🔔","Kettlebell Press":"🔔","Kettlebell Rows":"🔔","Kettlebell Lunges":"🔔","Kettlebell Cleans":"🔔","Kettlebell Snatches":"🔔"};
+const MG = {"Legs & Glutes":["Jump Squats","Hip Thrusts","Romanian Deadlifts","Glute Bridges","Sumo Squats","Donkey Kicks","Lateral Jumps","Lunges","Squats","Fire Hydrants","Kettlebell Deadlifts","Goblet Squats","Kettlebell Lunges"],"Core & Cardio":["Mountain Climbers","Plank Jacks","High Knees","Sprint in Place","Burpees","Tuck Jumps","Plank","Crunches","Leg Raises","Kettlebell Swings","Turkish Get-Ups"],"Upper Body":["Push-Ups","Pull-Ups","Dips","Rows","Bench Press","Bicep Curls","Tricep Extensions","Shoulder Press","Lat Pulldowns","Kettlebell Press","Kettlebell Rows","Kettlebell Cleans","Kettlebell Snatches"]};
 const getMG = n => { for(const[g,ex] of Object.entries(MG)) if(ex.includes(n)) return g; return "Other"; };
 const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 const fmtDate = d => new Date(d).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
 
-// Curated fallback YouTube video IDs for common exercises (used when API key not set)
 const YT_FALLBACKS = {
   "Jump Squats":"Hvj5Jdwu2KY","Burpees":"dZgVxmf6jkA","High Knees":"ZZZoCNMU48U","Mountain Climbers":"nmwgirgXLYM","Lateral Jumps":"k3AkFPYe_dA","Plank Jacks":"5GKg9JTBQME","Tuck Jumps":"rkrIAOoJBxM","Sprint in Place":"fuFMkMeB47g",
   "Hip Thrusts":"xn5XiRhJNmU","Romanian Deadlifts":"JCXUYuzwNrM","Glute Bridges":"OUgsJ8-Vi0E","Sumo Squats":"YUbgHfkk6KY","Donkey Kicks":"SJ1Xuz9D-8Q","Fire Hydrants":"la7AduHtYkw",
   "Push-Ups":"IODxDxX7oi4","Pull-Ups":"eGo4IYlbE5g","Dips":"2z8JmcrW-As","Lunges":"QOVaHwm-Q6U","Squats":"aclHkVaku9U","Plank":"pSHjTRCQxIw","Crunches":"MKmrqckCjXA","Bench Press":"SCVCLChPQFY","Deadlifts":"op9kVnSso6Q","Bicep Curls":"ykJmrZ5v0Oo","Shoulder Press":"qEwKCR5JCog",
+  "Kettlebell Swings":"1T5SBH0A9Rs","Goblet Squats":"MeIiIdhvXT4","Turkish Get-Ups":"DSoJIFnVQR8",
 };
 
 const DEMO_WORKOUTS = [];
-
 const DEMO_HISTORY = [];
 
-// ── YouTube search hook ───────────────────────────────────────────
 const videoCache = {};
 const useExerciseVideo = (exerciseName) => {
   const [videoId, setVideoId] = useState(null);
@@ -261,8 +254,7 @@ const useExerciseVideo = (exerciseName) => {
   const fetch = useCallback(async () => {
     if (!exerciseName) return;
     if (videoCache[exerciseName]) { setVideoId(videoCache[exerciseName].id); setTitle(videoCache[exerciseName].title); return; }
-    // Use fallback if no real API key
-    if (!YT_API_KEY || YT_API_KEY === "YOUR_YOUTUBE_API_KEY_HERE") {
+    if (!YT_API_KEY) {
       const fallback = YT_FALLBACKS[exerciseName];
       if (fallback) { setVideoId(fallback); setTitle(`${exerciseName} — proper form`); videoCache[exerciseName] = {id:fallback,title:`${exerciseName} — proper form`}; }
       return;
@@ -279,24 +271,25 @@ const useExerciseVideo = (exerciseName) => {
         videoCache[exerciseName] = {id, title:t};
         setVideoId(id); setTitle(t);
       }
-    } catch { /* silent */ }
+    } catch { }
     setLoading(false);
   }, [exerciseName]);
 
   return { videoId, loading, title, fetch };
 };
 
-// ── Exercise Video Drawer (used in detail screen) ────────────────
 const ExerciseVideoDrawer = ({ exercise, open }) => {
   const { videoId, loading, title, fetch } = useExerciseVideo(exercise.name);
-  useEffect(() => { if (open && !videoId) fetch(); }, [open]);
-  if (!open) return null;
   const containerRef = useRef(null);
-useEffect(()=>{
-  if(open && containerRef.current){
-    setTimeout(()=>containerRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"}),100);
-  }
-},[open]);
+
+  useEffect(() => { if (open && !videoId) fetch(); }, [open]);
+  useEffect(() => {
+    if (open && containerRef.current) {
+      setTimeout(() => containerRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"}), 100);
+    }
+  }, [open]);
+
+  if (!open) return null;
   return (
     <div ref={containerRef} className={`vid-drawer ${open?"open":""}`}>
       <div className="vid-drawer-inner">
@@ -320,7 +313,6 @@ useEffect(()=>{
   );
 };
 
-// ── Full-screen video overlay (used in active workout) ───────────
 const VideoOverlay = ({ exercise, onClose }) => {
   const { videoId, loading, title, fetch } = useExerciseVideo(exercise.name);
   useEffect(() => { fetch(); }, []);
@@ -361,13 +353,12 @@ const VideoOverlay = ({ exercise, onClose }) => {
   );
 };
 
-// ── Main App ──────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("home");
   const [search, setSearch] = useState("");
   const [onboarded, setOnboarded] = useState(()=>{try{return localStorage.getItem("sl_onboarded")==="1";}catch{return false;}});
   const [workouts, setWorkouts] = useState(()=>{try{const s=localStorage.getItem("sl_workouts");return s?JSON.parse(s):[];}catch{return[];}});
-const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl_history");return s?JSON.parse(s):[];}catch{return[];}});
+  const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl_history");return s?JSON.parse(s):[];}catch{return[];}});
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [importUrl, setImportUrl] = useState("");
   const [importCaption, setImportCaption] = useState("");
@@ -385,9 +376,9 @@ const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl
   const [activeWorkout, setActiveWorkout] = useState(null);
   const [timerSec, setTimerSec] = useState(0);
   const [expandedEx, setExpandedEx] = useState(0);
-  const [videoOverlay, setVideoOverlay] = useState(null); // exercise obj
+  const [videoOverlay, setVideoOverlay] = useState(null);
   const [showCompletion, setShowCompletion] = useState(null);
-  const [openVideos, setOpenVideos] = useState({}); // {exName: bool} for detail screen drawers
+  const [openVideos, setOpenVideos] = useState({});
   const timerRef = useRef(null);
   const fileRef = useRef();
   const videoRef = useRef();
@@ -396,9 +387,11 @@ const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl
     ...workouts.flatMap(w=>w.exerciseList.map(ex=>({...ex,workoutId:w.id,workoutTitle:w.title,influencer:w.influencer||w.source,muscleGroup:getMG(ex.name),isOwn:false}))),
     ...ownExercises.map(ex=>({...ex,workoutId:"own",workoutTitle:"My Exercises",influencer:"You",isOwn:true,sets:ex.defaultSets,reps:ex.defaultReps,weight:ex.defaultWeight})),
   ].filter((ex,i,arr)=>arr.findIndex(e=>e.name===ex.name&&e.workoutId===ex.workoutId)===i);
-useEffect(()=>{try{localStorage.setItem("sl_workouts",JSON.stringify(workouts));}catch{}},[workouts]);
-useEffect(()=>{try{localStorage.setItem("sl_history",JSON.stringify(history));}catch{}},[history]);
-const completeOnboarding=()=>{try{localStorage.setItem("sl_onboarded","1");}catch{}setOnboarded(true);};
+
+  useEffect(()=>{try{localStorage.setItem("sl_workouts",JSON.stringify(workouts));}catch{}},[workouts]);
+  useEffect(()=>{try{localStorage.setItem("sl_history",JSON.stringify(history));}catch{}},[history]);
+
+  const completeOnboarding = ()=>{try{localStorage.setItem("sl_onboarded","1");}catch{}setOnboarded(true);};
   const showToast = msg=>{setToast({show:true,msg});setTimeout(()=>setToast({show:false,msg:""}),2200);};
 
   useEffect(()=>{
@@ -416,13 +409,7 @@ const completeOnboarding=()=>{try{localStorage.setItem("sl_onboarded","1");}catc
   const analyzeWithAI = async()=>{
     if(!importUrl&&!importCaption) return;
     setLoading(true);
-    const prompt=`You are a fitness coach AI. Analyze this workout content and extract a complete structured workout.
-URL: ${importUrl||"none"}
-Caption: ${importCaption||"none"}
-Return ONLY valid JSON (no markdown):
-{"title":"Name","tag":"HIIT|Strength|Cardio|Yoga|Core|Full Body","duration":25,"level":"Beginner|Intermediate|Advanced","influencer":"@handle","source":"Instagram|TikTok|YouTube|Other","notes":"tips","exerciseList":[{"name":"Exercise","sets":"3","reps":"12","rest":"30s","weight":"","notes":"form tip"}]}
-Return ONLY the JSON.`;
-  try{
+    try{
       const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:importUrl,caption:importCaption})});
       const data=await res.json();
       let parsed;
@@ -432,7 +419,7 @@ Return ONLY the JSON.`;
         const text=data.content?.find(b=>b.type==="text")?.text||data.content?.[0]?.text||"";
         parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
       }
-      const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,youtubeId:parsed.videoId||null};
+      const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:parsed.videoId||null,youtubeId:parsed.videoId||null};
       setWorkouts(p=>[nw,...p]);
       setImportUrl("");setImportCaption("");setLoading(false);
       setSelectedWorkout(nw);setTab("detail");
@@ -464,7 +451,7 @@ Return ONLY the JSON.`;
     setActiveWorkout(prev=>{const ex=[...prev.exercises];ex[ei]={...ex[ei],sets:[...ex[ei].sets,{setNum:ex[ei].sets.length+1,reps:"",weight:"",time:"",done:false}]};return{...prev,exercises:ex};});
   };
 
- const finishWorkout=()=>{
+  const finishWorkout=()=>{
     if(!activeWorkout) return;
     const vol=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).reduce((b,s)=>{const r=parseFloat(s.reps)||0,w=parseFloat(s.weight)||1;return b+(r*w);},0),0);
     const log={id:Date.now(),workoutId:activeWorkout.workoutId,workoutTitle:activeWorkout.workoutTitle,date:new Date().toISOString(),duration:timerSec,totalVolume:Math.round(vol),exercises:activeWorkout.exercises};
@@ -488,7 +475,7 @@ Return ONLY the JSON.`;
 
   const saveCustomWorkout=()=>{
     if(!customExercises.length) return;
-    const w={id:Date.now(),title:customName||"My Custom Workout",tag:"Custom",emoji:"⚡",source:"Custom",duration:customExercises.length*4,level:"Custom",influencer:"You",isOwn:true,youtubeId:null,notes:"Custom workout built in SetList.",
+    const w={id:Date.now(),title:customName||"My Custom Workout",tag:"Custom",emoji:"⚡",source:"Custom",duration:customExercises.length*4,level:"Custom",influencer:"You",isOwn:true,videoId:null,youtubeId:null,notes:"Custom workout built in SetList.",
       exerciseList:customExercises.map(e=>({name:e.name,sets:e.sets||e.defaultSets||"3",reps:e.reps||e.defaultReps||"10",rest:"60s",weight:e.weight||e.defaultWeight||"",notes:e.notes||""}))};
     setWorkouts(p=>[w,...p]);
     setCustomName("");setCustomExercises([]);setBuilderMode(false);setShowPicker(false);
@@ -503,120 +490,131 @@ Return ONLY the JSON.`;
     weeklyVol: (()=>{const days=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],vals=Array(7).fill(0),now=new Date();history.forEach(h=>{const diff=Math.floor((now-new Date(h.date))/86400000);if(diff<7){const di=(6-diff+now.getDay())%7;vals[di]+=(h.totalVolume||0);}});return{days,vals};})(),
   };
 
-  // ── Screens ────────────────────────────────────────────────────
-
- const renderHome=()=>{
-  const filtered=workouts.filter(w=>
-    w.title?.toLowerCase().includes(search.toLowerCase())||
-    w.tag?.toLowerCase().includes(search.toLowerCase())||
-    w.influencer?.toLowerCase().includes(search.toLowerCase())||
-    w.level?.toLowerCase().includes(search.toLowerCase())
-  );
-  return(
-    <div className="con">
-      <div className="sh-row"><span className="sh" style={{margin:0}}>Overview</span></div>
-      <div className="hscroll" style={{marginBottom:18}}>
-        {[["Workouts",workouts.length],["Exercises",library.length],["Logged",analytics.totalWorkouts],["Streak 🔥",analytics.streak]].map(([l,v])=>(
-          <div key={l} className="scard"><div className="sval">{v}</div><div className="slbl">{l}</div></div>
-        ))}
-      </div>
-      <div style={{marginBottom:13,position:"relative"}}>
-        <div style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</div>
-        <input className="tinput" placeholder="Search workouts..." value={search} onChange={e=>setSearch(e.target.value)} style={{paddingLeft:38,borderRadius:13}}/>
-        {search&&<div style={{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",fontSize:18,cursor:"pointer",color:C.muted}} onClick={()=>setSearch("")}>×</div>}
-      </div>
-      <div className="sh-row">
-        <span className="sh" style={{margin:0}}>{search?`Results · ${filtered.length}`:"All Workouts"}</span>
-        <span className="sa" onClick={()=>setTab("import")}>+ Import</span>
-      </div>
-      {filtered.length===0?(
-        <div className="empty"><div className="empty-icon">🔍</div><div className="etitle">No Results</div><div className="esub">Try a different search term.</div></div>
-      ):filtered.map((w,i)=>(
-        <div key={w.id} className={`wcard ${i===0&&!search?"feat":""}`} onClick={()=>{setSelectedWorkout(w);setTab("detail");}}>
-          <div className="wthumb"><span className="thmoji">{w.emoji}</span><span className="cbadge">{w.tag}</span><span className="csrc">{w.isOwn?"✦ Mine":w.influencer||w.source}</span></div>
-          <div className="cbody">
-            <div className="ctitle">{w.title}</div>
-            <div className="cpills">
-              <span className="pill hi">⏱ {w.duration}m</span>
-              <span className="pill">🏋️ {w.exerciseList?.length} exercises</span>
-              <span className="pill">{w.level}</span>
-              {w.isOwn&&<span className="pill grn">✦ Custom</span>}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-  const ImportScreen=()=>{
-  const isInstagramOrTikTok = importUrl && (importUrl.includes("instagram.com") || importUrl.includes("tiktok.com"));
-  const canAnalyze = (importUrl || importCaption) && (!isInstagramOrTikTok || importCaption.trim().length > 0);
-  return(
-    loading?(
-      <div className="loading-wrap">
-        <div className="wl">{[1,2,3,4,5].map(i=><div key={i} className="wb"/>)}</div>
-        <div style={{fontFamily:"'Syne',sans-serif",fontSize:19,fontWeight:800}}>Building Your Workout</div>
-        <div style={{fontSize:13,color:C.muted,lineHeight:1.5,textAlign:"center"}}>Extracting exercises from your content.</div>
-      </div>
-    ):(
-      <div className="con" style={{display:"flex",flexDirection:"column",gap:13}}>
-        <div style={{background:`linear-gradient(135deg,${C.blue}22,${C.blue}08)`,border:`1px solid ${C.borderHi}`,borderRadius:18,padding:17}}>
-          <div style={{fontFamily:"'Syne',sans-serif",fontSize:15,fontWeight:800,color:C.text,marginBottom:5}}>Turn any workout into a structured routine</div>
-          <div style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Paste a link and the workout description. SetList structures it into sets, reps, and rest periods you can use at the gym.</div>
-        </div>
-
-        <div>
-          <div className="flbl">Post URL <span style={{color:C.muted,fontWeight:400,textTransform:"none",letterSpacing:0}}>(YouTube, Instagram, TikTok)</span></div>
-          <input className="tinput" placeholder="https://www.instagram.com/p/..." value={importUrl} onChange={e=>setImportUrl(e.target.value)}/>
-          {isInstagramOrTikTok&&(
-            <div style={{marginTop:7,background:`${C.gold}18`,border:`1px solid ${C.gold}44`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.gold,lineHeight:1.5}}>
-              📋 Instagram and TikTok links need a description for accurate results. Paste the caption below.
-            </div>
-          )}
-        </div>
-
-        <div>
-          <div className="flbl">Workout Description <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>← most important</span></div>
-          <textarea className="tinput" rows={5} placeholder={`Paste the caption, description, or type the workout yourself.\n\nExample:\n4x12 Kettlebell Swings\n3x10 Goblet Squats\n3x15 Romanian Deadlifts`} value={importCaption} onChange={e=>setImportCaption(e.target.value)}/>
-          <div style={{fontSize:10,color:C.muted,marginTop:5}}>💡 The more detail you paste, the more accurate your workout will be.</div>
-        </div>
-
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:13,padding:"11px 14px"}}>
-          <div style={{fontSize:10,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>How to get best results</div>
-          {[["YouTube","Paste the link — title and description pull in automatically ✓"],["Instagram","Paste link + copy the caption from the post"],["TikTok","Paste link + copy the caption or describe the workout yourself"],["No link","Just type or paste the workout directly into the description field"]].map(([p,t])=>(
-            <div key={p} style={{display:"flex",gap:9,marginBottom:6,fontSize:12,lineHeight:1.4}}>
-              <span style={{fontWeight:700,color:C.blueBright,minWidth:72,fontSize:11}}>{p}</span>
-              <span style={{color:C.accentDim}}>{t}</span>
-            </div>
+  const renderHome=()=>{
+    const filtered=workouts.filter(w=>
+      w.title?.toLowerCase().includes(search.toLowerCase())||
+      w.tag?.toLowerCase().includes(search.toLowerCase())||
+      w.influencer?.toLowerCase().includes(search.toLowerCase())||
+      w.level?.toLowerCase().includes(search.toLowerCase())
+    );
+    return(
+      <div className="con">
+        <div className="sh-row"><span className="sh" style={{margin:0}}>Overview</span></div>
+        <div className="hscroll">
+          {[["Workouts",workouts.length],["Exercises",library.length],["Logged",analytics.totalWorkouts],["Streak 🔥",analytics.streak]].map(([l,v])=>(
+            <div key={l} className="scard"><div className="sval">{v}</div><div className="slbl">{l}</div></div>
           ))}
         </div>
-
-        <button className="btn" onClick={analyzeWithAI} disabled={!canAnalyze}>
-          ⚡ Build Workout
-        </button>
-        {isInstagramOrTikTok&&!importCaption.trim()&&(
-          <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add a description above to enable analysis</div>
-        )}
+        <div style={{marginBottom:13,position:"relative"}}>
+          <div style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:15,pointerEvents:"none"}}>🔍</div>
+          <input className="tinput" placeholder="Search workouts..." value={search} onChange={e=>setSearch(e.target.value)} style={{paddingLeft:38,borderRadius:13}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"/>
+          {search&&<div style={{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",fontSize:18,cursor:"pointer",color:C.muted}} onClick={()=>setSearch("")}>×</div>}
+        </div>
+        <div className="sh-row">
+          <span className="sh" style={{margin:0}}>{search?`Results · ${filtered.length}`:"All Workouts"}</span>
+          <span className="sa" onClick={()=>setTab("import")}>+ Import</span>
+        </div>
+        {workouts.length===0?(
+          <div className="empty">
+            <div className="empty-icon">🏋️</div>
+            <div className="etitle">No Workouts Yet</div>
+            <div className="esub">Tap Import to add your first workout from YouTube, Instagram, or TikTok.</div>
+            <button className="btn" style={{marginTop:16}} onClick={()=>setTab("import")}>⚡ Import a Workout</button>
+          </div>
+        ):filtered.length===0?(
+          <div className="empty"><div className="empty-icon">🔍</div><div className="etitle">No Results</div><div className="esub">Try a different search term.</div></div>
+        ):filtered.map((w,i)=>(
+          <div key={w.id} className={`wcard ${i===0&&!search?"feat":""}`} onClick={()=>{setSelectedWorkout(w);setTab("detail");}}>
+            <div className="wthumb" style={(w.videoId||w.youtubeId)?{backgroundImage:`url(https://img.youtube.com/vi/${w.videoId||w.youtubeId}/hqdefault.jpg)`,backgroundSize:"cover",backgroundPosition:"center"}:{}}>
+              {!(w.videoId||w.youtubeId)&&<span className="thmoji">{w.emoji}</span>}
+              <span className="cbadge">{w.tag}</span>
+              <span className="csrc">{w.isOwn?"✦ Mine":w.influencer||w.source}</span>
+            </div>
+            <div className="cbody">
+              <div className="ctitle">{w.title}</div>
+              <div className="cpills">
+                <span className="pill hi">⏱ {w.duration}m</span>
+                <span className="pill">🏋️ {w.exerciseList?.length} exercises</span>
+                <span className="pill">{w.level}</span>
+                {w.isOwn&&<span className="pill grn">✦ Custom</span>}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-    )
-  );
-};
+    );
+  };
 
+  const ImportScreen=()=>{
+    const isInstagramOrTikTok = importUrl && (importUrl.includes("instagram.com") || importUrl.includes("tiktok.com"));
+    const canAnalyze = (importUrl || importCaption) && (!isInstagramOrTikTok || importCaption.trim().length > 0);
+    return(
+      loading?(
+        <div className="con">
+          <div className="loading-wrap">
+            <div className="wl">{[1,2,3,4,5].map(i=><div key={i} className="wb"/>)}</div>
+            <div style={{fontFamily:"'Syne',sans-serif",fontSize:19,fontWeight:800}}>Building Your Workout</div>
+            <div style={{fontSize:13,color:C.muted,lineHeight:1.5,textAlign:"center"}}>Transcribing and extracting exercises from your video.</div>
+          </div>
+        </div>
+      ):(
+        <div className="con" style={{display:"flex",flexDirection:"column",gap:13}}>
+          <div style={{background:`linear-gradient(135deg,${C.blue}22,${C.blue}08)`,border:`1px solid ${C.borderHi}`,borderRadius:18,padding:17}}>
+            <div style={{fontFamily:"'Syne',sans-serif",fontSize:15,fontWeight:800,color:C.text,marginBottom:5}}>Turn any workout into a structured routine</div>
+            <div style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Paste a YouTube link and SetList will transcribe the audio and extract every exercise automatically.</div>
+          </div>
+          <div>
+            <div className="flbl">Post URL <span style={{color:C.muted,fontWeight:400,textTransform:"none",letterSpacing:0}}>(YouTube, Instagram, TikTok)</span></div>
+            <input className="tinput" placeholder="https://www.youtube.com/watch?v=..." value={importUrl} onChange={e=>setImportUrl(e.target.value)} autoComplete="off"/>
+            {isInstagramOrTikTok&&(
+              <div style={{marginTop:7,background:`${C.gold}18`,border:`1px solid ${C.gold}44`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.gold,lineHeight:1.5}}>
+                📋 Instagram and TikTok links need a description for accurate results. Paste the caption below.
+              </div>
+            )}
+          </div>
+          <div>
+            <div className="flbl">Workout Description <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>← paste caption for best results</span></div>
+            <textarea className="tinput" rows={5} placeholder={`Paste the caption, description, or type the workout yourself.\n\nExample:\n4x12 Kettlebell Swings\n3x10 Goblet Squats\n3x15 Romanian Deadlifts`} value={importCaption} onChange={e=>setImportCaption(e.target.value)}/>
+            <div style={{fontSize:10,color:C.muted,marginTop:5}}>💡 YouTube links auto-transcribe. For Instagram/TikTok paste the caption.</div>
+          </div>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:13,padding:"11px 14px"}}>
+            <div style={{fontSize:10,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>How to get best results</div>
+            {[["YouTube ✓","Paste the link — audio is transcribed automatically"],["Instagram","Paste link + copy the caption from the post"],["TikTok","Paste link + copy the caption or describe the workout"],["No link","Just type or paste the workout directly below"]].map(([p,t])=>(
+              <div key={p} style={{display:"flex",gap:9,marginBottom:6,fontSize:12,lineHeight:1.4}}>
+                <span style={{fontWeight:700,color:C.blueBright,minWidth:80,fontSize:11}}>{p}</span>
+                <span style={{color:C.accentDim}}>{t}</span>
+              </div>
+            ))}
+          </div>
+          <button className="btn" onClick={analyzeWithAI} disabled={!canAnalyze}>⚡ Build Workout</button>
+          {isInstagramOrTikTok&&!importCaption.trim()&&(
+            <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add a description above to enable analysis</div>
+          )}
+        </div>
+      )
+    );
+  };
 
   const DetailScreen=()=>{
     const w=selectedWorkout;
     if(!w) return null;
     const logs=history.filter(h=>h.workoutId===w.id);
+    const ytId = w.videoId||w.youtubeId||null;
     return(
       <div className="dtwrap">
         <div className="dthdr">
           <div className="backbtn" onClick={()=>setTab("home")}>←</div>
           <div className="dttitle">{w.title}</div>
-          <div className="ibtn" onClick={()=>showToast("Copied!")}>↑</div>
         </div>
-        {w.youtubeId?(<div className="videoarea"><iframe src={`https://www.youtube.com/embed/${w.youtubeId}`} allowFullScreen/></div>):(
-          <div className="videoarea"><span style={{fontSize:50}}>{w.emoji}</span><span style={{fontSize:12,color:C.muted}}>{w.influencer||w.source}</span></div>
+        {ytId ? (
+          <div className="videoarea">
+            <iframe src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`} allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"/>
+          </div>
+        ) : (
+          <div className="videoarea">
+            <span style={{fontSize:50}}>{w.emoji}</span>
+            <span style={{fontSize:12,color:C.muted}}>{w.influencer||w.source}</span>
+          </div>
         )}
         <div className="statsrow">
           <div className="stcell"><div className="stval">{w.duration}</div><div className="stlbl">Minutes</div></div>
@@ -628,7 +626,6 @@ Return ONLY the JSON.`;
           <div className="sh" style={{margin:0}}>Exercises</div>
           <span style={{fontSize:10,color:C.muted}}>Tap ▶ for demo video</span>
         </div>
-
         <div className="exlist">
           {w.exerciseList?.map((ex,i)=>{
             const vidOpen = openVideos[ex.name];
@@ -644,7 +641,7 @@ Return ONLY the JSON.`;
                   </div>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
                     {analytics.prByExercise[ex.name]&&<div style={{fontSize:10,color:C.gold,fontWeight:700}}>PR {analytics.prByExercise[ex.name]}lb</div>}
-                    <div className={`ex-vid-btn ${vidOpen?"":""}` } onClick={e=>{e.preventDefault();e.stopPropagation();setOpenVideos(p=>({...p,[ex.name]:!p[ex.name]}));}}>
+                    <div className="ex-vid-btn" onClick={e=>{e.preventDefault();e.stopPropagation();setOpenVideos(p=>({...p,[ex.name]:!p[ex.name]}));}}>
                       {vidOpen?"▼ Hide":"▶ Demo"}
                     </div>
                   </div>
@@ -654,14 +651,13 @@ Return ONLY the JSON.`;
             );
           })}
         </div>
-
         <div style={{padding:15,display:"flex",flexDirection:"column",gap:9}}>
           <button className="btn" onClick={()=>startWorkout(w)}>▶ Start Workout</button>
           <div className="row2">
             <button className="btn ghost" onClick={()=>{setBuilderMode(true);setCustomExercises([...(w.exerciseList||[])]);setCustomName(`${w.title} (remix)`);setTab("library");}}>✦ Remix</button>
             <button className="btn ghost" onClick={()=>setTab("progress")}>📊 Progress</button>
-            <button className="btn" style={{background:C.red,marginTop:4}} onClick={()=>{if(window.confirm("Delete this workout?")){{setWorkouts(p=>p.filter(x=>x.id!==w.id));setTab("home");}}}}>🗑 Delete Workout</button>
           </div>
+          <button className="btn" style={{background:C.red}} onClick={()=>{if(window.confirm("Delete this workout?")){setWorkouts(p=>p.filter(x=>x.id!==w.id));setTab("home");}}}>🗑 Delete Workout</button>
         </div>
       </div>
     );
@@ -686,7 +682,6 @@ Return ONLY the JSON.`;
             <span style={{fontSize:11,color:C.blueBright,fontWeight:700,cursor:"pointer"}} onClick={finishWorkout}>Finish ✓</span>
           </div>
           <div className="prog-bar-bg"><div className="prog-bar" style={{width:`${pct}%`}}/></div>
-
           {activeWorkout.exercises.map((ex,ei)=>{
             const allDone=ex.sets.every(s=>s.done);
             const open=expandedEx===ei;
@@ -700,13 +695,11 @@ Return ONLY the JSON.`;
                 </div>
                 {open&&(
                   <>
-                    {/* ── DEMO VIDEO BUTTON ── */}
                     <div className="demo-btn" onClick={()=>setVideoOverlay(ex)}>
                       <div className="pulse"/>
                       <span>Watch Demo · {ex.name}</span>
                       <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
                     </div>
-
                     <div className="set-rows">
                       <div style={{display:"grid",gridTemplateColumns:"28px 1fr 1fr 1fr 36px",gap:8,paddingBottom:4}}>
                         {["Set","Reps","Weight","Time",""].map((l,i)=><div key={i} className="set-col-lbl">{l}</div>)}
@@ -756,9 +749,7 @@ Return ONLY the JSON.`;
             </div>
           ))}
           <div className="row2">
-            <button className="btn ghost sm" onClick={()=>{setShowPicker(p=>!p);setShowCreateEx(false);}}>
-              {showPicker?"▲ Hide Library":"＋ From Library"}
-            </button>
+            <button className="btn ghost sm" onClick={()=>{setShowPicker(p=>!p);setShowCreateEx(false);}}>{showPicker?"▲ Hide Library":"＋ From Library"}</button>
             <button className="btn ghost sm" onClick={()=>{setShowCreateEx(true);setShowPicker(false);}}>✦ New Exercise</button>
           </div>
           {showPicker&&(
@@ -783,7 +774,6 @@ Return ONLY the JSON.`;
         </div>
       </div>
     );
-
     return(
       <div className="con">
         <div className="sh-row">
@@ -936,84 +926,81 @@ Return ONLY the JSON.`;
         </div>
         <div><div className="flbl">Notes / Form Cues</div><textarea className="tinput" rows={3} placeholder="Tempo, breathing, key cues..." value={newEx.notes} onChange={e=>setNewEx(p=>({...p,notes:e.target.value}))}/></div>
         <div><div className="flbl">Video Reference URL (YouTube)</div><input className="tinput" placeholder="https://youtube.com/..." value={newEx.videoUrl} onChange={e=>setNewEx(p=>({...p,videoUrl:e.target.value}))}/></div>
-        <div className="ubox" onClick={()=>videoRef.current?.click()} style={{padding:13}}>
-          <div style={{fontSize:12,color:C.muted}}>📎 Attach reference video or photo from camera roll</div>
-          <input ref={videoRef} type="file" accept="video/*,image/*" style={{display:"none"}} onChange={e=>{if(e.target.files[0])showToast("Reference attached ✓");}}/>
-        </div>
         <button className="btn" onClick={saveOwnExercise} disabled={!newEx.name.trim()}>Save to Library</button>
       </div>
     </div>
   );
 
   const OnboardingScreen=()=>{
-  const [slide,setSlide]=useState(0);
-  const slides=[
-    {emoji:"🏋️",title:"Welcome to SetList",sub:"Your personal workout library.\nImport any workout from Instagram,\nTikTok, or YouTube in seconds."},
-    {emoji:"⚡",title:"How It Works",sub:"Share a post link or paste a caption.\nOur AI breaks down every exercise,\nset, rep, and rest automatically."},
-    {emoji:"🔥",title:"Build Your Library",sub:"Save workouts, track your progress,\nbuild custom routines, and\nnever lose a workout again."},
-  ];
-  const s=slides[slide];
-  return(
-    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"60px 28px 48px",textAlign:"center",background:C.bg}}>
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24}}>
-        <div style={{width:120,height:120,borderRadius:32,background:`linear-gradient(135deg,${C.blue}44,${C.blueBright}22)`,border:`1px solid ${C.borderHi}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:56}}>{s.emoji}</div>
-        <div>
-          <div style={{fontFamily:"'Syne',sans-serif",fontSize:26,fontWeight:800,letterSpacing:"-.5px",marginBottom:12,color:C.text}}>{s.title}</div>
-          <div style={{fontSize:14,color:C.muted,lineHeight:1.7,whiteSpace:"pre-line"}}>{s.sub}</div>
+    const [slide,setSlide]=useState(0);
+    const slides=[
+      {emoji:"🏋️",title:"Welcome to SetList",sub:"Your personal workout library.\nImport any workout from YouTube,\nInstagram, or TikTok in seconds."},
+      {emoji:"⚡",title:"How It Works",sub:"Paste a YouTube link and our AI\ntranscribes the video and extracts\nevery exercise automatically."},
+      {emoji:"🔥",title:"Build Your Library",sub:"Save workouts, track your progress,\nbuild custom routines, and\nnever lose a workout again."},
+    ];
+    const s=slides[slide];
+    return(
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"60px 28px 48px",textAlign:"center",background:C.bg}}>
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24}}>
+          <div style={{width:120,height:120,borderRadius:32,background:`linear-gradient(135deg,${C.blue}44,${C.blueBright}22)`,border:`1px solid ${C.borderHi}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:56}}>{s.emoji}</div>
+          <div>
+            <div style={{fontFamily:"'Syne',sans-serif",fontSize:26,fontWeight:800,letterSpacing:"-.5px",marginBottom:12,color:C.text}}>{s.title}</div>
+            <div style={{fontSize:14,color:C.muted,lineHeight:1.7,whiteSpace:"pre-line"}}>{s.sub}</div>
+          </div>
+          <div style={{display:"flex",gap:7,marginTop:8}}>
+            {slides.map((_,i)=>(
+              <div key={i} style={{width:i===slide?24:7,height:7,borderRadius:4,background:i===slide?C.blueBright:C.border,transition:"all .3s"}}/>
+            ))}
+          </div>
         </div>
-        <div style={{display:"flex",gap:7,marginTop:8}}>
-          {slides.map((_,i)=>(
-            <div key={i} style={{width:i===slide?24:7,height:7,borderRadius:4,background:i===slide?C.blueBright:C.border,transition:"all .3s"}}/>
-          ))}
-        </div>
-      </div>
-      <div style={{width:"100%",display:"flex",flexDirection:"column",gap:10}}>
-        {slide<slides.length-1?(
-          <>
-            <button className="btn" onClick={()=>setSlide(s=>s+1)}>Continue →</button>
-            <button className="btn ghost" onClick={completeOnboarding} style={{padding:11,fontSize:12,color:C.muted}}>Skip</button>
-          </>
-        ):(
-          <button className="btn" onClick={completeOnboarding}>Get Started 🔥</button>
-        )}
-      </div>
-    </div>
-  );
-};
- const CompletionScreen=()=>{
-  const c=showCompletion;
-  const [dots]=useState(()=>Array.from({length:40},(_,i)=>({id:i,x:Math.random()*100,delay:Math.random()*0.8,dur:1.2+Math.random()*1.2,color:["#2A8FEF","#22C97A","#F5C842","#FF5A5A","#A855F7"][Math.floor(Math.random()*5)],size:4+Math.random()*8})));
-  useEffect(()=>{if(window.navigator.vibrate)window.navigator.vibrate([100,50,100]);},[]);
-  return(
-    <div style={{position:"fixed",inset:0,background:C.bg,zIndex:300,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"80px 28px 60px",textAlign:"center",overflow:"hidden"}}>
-      <style>{`@keyframes confetti{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}@keyframes popIn{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}`}</style>
-      {dots.map(d=>(
-        <div key={d.id} style={{position:"absolute",left:`${d.x}%`,top:-20,width:d.size,height:d.size,borderRadius:d.size>8?4:50,background:d.color,animation:`confetti ${d.dur}s ${d.delay}s ease-in forwards`,pointerEvents:"none"}}/>
-      ))}
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,animation:"popIn .5s ease forwards"}}>
-        <div style={{fontSize:80}}>🎉</div>
-        <div>
-          <div style={{fontFamily:"'Syne',sans-serif",fontSize:28,fontWeight:800,marginBottom:8}}>Workout Complete!</div>
-          <div style={{fontSize:14,color:C.muted}}>{c.title}</div>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,width:"100%",marginTop:8}}>
-          {[["⏱",fmtTime(c.duration),"Duration"],["🏋️",c.exercises,"Exercises"],["✅",c.sets,"Sets Done"],["🔥",c.volume>0?`${c.volume}lb`:"—","Volume"]].map(([icon,val,lbl])=>(
-            <div key={lbl} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:"14px 10px"}}>
-              <div style={{fontSize:22,marginBottom:4}}>{icon}</div>
-              <div style={{fontFamily:"'Syne',sans-serif",fontSize:22,fontWeight:800,color:C.blueBright}}>{val}</div>
-              <div style={{fontSize:10,color:C.muted,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",marginTop:2}}>{lbl}</div>
-            </div>
-          ))}
+        <div style={{width:"100%",display:"flex",flexDirection:"column",gap:10}}>
+          {slide<slides.length-1?(
+            <>
+              <button className="btn" onClick={()=>setSlide(s=>s+1)}>Continue →</button>
+              <button className="btn ghost" onClick={completeOnboarding} style={{padding:11,fontSize:12,color:C.muted}}>Skip</button>
+            </>
+          ):(
+            <button className="btn" onClick={completeOnboarding}>Get Started 🔥</button>
+          )}
         </div>
       </div>
-      <button className="btn" onClick={()=>{setShowCompletion(null);setTab("progress");}}>View Progress 📊</button>
-    </div>
-  );
-};
-const renderMain=()=>{
-  if(showCompletion) return <CompletionScreen/>;
+    );
+  };
+
+  const CompletionScreen=()=>{
+    const c=showCompletion;
+    const [dots]=useState(()=>Array.from({length:40},(_,i)=>({id:i,x:Math.random()*100,delay:Math.random()*0.8,dur:1.2+Math.random()*1.2,color:["#2A8FEF","#22C97A","#F5C842","#FF5A5A","#A855F7"][Math.floor(Math.random()*5)],size:4+Math.random()*8})));
+    useEffect(()=>{if(window.navigator.vibrate)window.navigator.vibrate([100,50,100]);},[]);
+    return(
+      <div style={{position:"fixed",inset:0,background:C.bg,zIndex:300,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"80px 28px 60px",textAlign:"center",overflow:"hidden"}}>
+        <style>{`@keyframes confetti{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}@keyframes popIn{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}`}</style>
+        {dots.map(d=>(
+          <div key={d.id} style={{position:"absolute",left:`${d.x}%`,top:-20,width:d.size,height:d.size,borderRadius:d.size>8?4:50,background:d.color,animation:`confetti ${d.dur}s ${d.delay}s ease-in forwards`,pointerEvents:"none"}}/>
+        ))}
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,animation:"popIn .5s ease forwards"}}>
+          <div style={{fontSize:80}}>🎉</div>
+          <div>
+            <div style={{fontFamily:"'Syne',sans-serif",fontSize:28,fontWeight:800,marginBottom:8}}>Workout Complete!</div>
+            <div style={{fontSize:14,color:C.muted}}>{c.title}</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,width:"100%",marginTop:8}}>
+            {[["⏱",fmtTime(c.duration),"Duration"],["🏋️",c.exercises,"Exercises"],["✅",c.sets,"Sets Done"],["🔥",c.volume>0?`${c.volume}lb`:"—","Volume"]].map(([icon,val,lbl])=>(
+              <div key={lbl} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:"14px 10px"}}>
+                <div style={{fontSize:22,marginBottom:4}}>{icon}</div>
+                <div style={{fontFamily:"'Syne',sans-serif",fontSize:22,fontWeight:800,color:C.blueBright}}>{val}</div>
+                <div style={{fontSize:10,color:C.muted,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",marginTop:2}}>{lbl}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <button className="btn" onClick={()=>{setShowCompletion(null);setTab("progress");}}>View Progress 📊</button>
+      </div>
+    );
+  };
+
+  const renderMain=()=>{
+    if(showCompletion) return <CompletionScreen/>;
     if(!onboarded) return <OnboardingScreen/>;
-    if(tab==="active") return <ActiveWorkoutScreen/>;
     if(tab==="active") return <ActiveWorkoutScreen/>;
     if(tab==="detail") return <DetailScreen/>;
     if(tab==="import") return <ImportScreen/>;
@@ -1029,7 +1016,6 @@ const renderMain=()=>{
         {tab!=="detail"&&tab!=="active"&&(
           <div className="hdr">
             <div><div className="logo">Set<em>List</em></div><div className="logo-tag">by you</div></div>
-            <div className="hdr-acts"><div className="ibtn">🔍</div><div className="ibtn">👤</div></div>
           </div>
         )}
         {renderMain()}
@@ -1042,7 +1028,6 @@ const renderMain=()=>{
             ))}
           </div>
         )}
-        {/* Global video overlay — accessible from library too */}
         {videoOverlay&&tab!=="active"&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}
         {showCreateEx&&<CreateExModal/>}
         <div className={`toast ${toast.show?"show":""}`}>{toast.msg}</div>
