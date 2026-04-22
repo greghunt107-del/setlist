@@ -77,6 +77,8 @@ export default async function handler(req, res) {
                   prompt: 'This is a fitness workout video. Extract exercise names, sets, reps, and rest periods.',
                 });
                 transcript = transcription.text || '';
+                console.log('TRANSCRIPT LENGTH:', transcript.length);
+console.log('TRANSCRIPT PREVIEW:', transcript.slice(0, 500));
               }
             }
           }
