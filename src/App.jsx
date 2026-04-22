@@ -291,8 +291,14 @@ const ExerciseVideoDrawer = ({ exercise, open }) => {
   const { videoId, loading, title, fetch } = useExerciseVideo(exercise.name);
   useEffect(() => { if (open && !videoId) fetch(); }, [open]);
   if (!open) return null;
+  const containerRef = useRef(null);
+useEffect(()=>{
+  if(open && containerRef.current){
+    setTimeout(()=>containerRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"}),100);
+  }
+},[open]);
   return (
-    <div className="vid-drawer open">
+    <div ref={containerRef} className={`vid-drawer ${open?"open":""}`}>
       <div className="vid-drawer-inner">
         {loading ? (
           <div className="vid-frame-placeholder"><div style={{fontSize:28}}>🔍</div><div>Finding demo video...</div></div>
@@ -638,7 +644,7 @@ Return ONLY the JSON.`;
                   </div>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
                     {analytics.prByExercise[ex.name]&&<div style={{fontSize:10,color:C.gold,fontWeight:700}}>PR {analytics.prByExercise[ex.name]}lb</div>}
-                    <div className={`ex-vid-btn ${vidOpen?"":""}` } onClick={e=>{e.preventDefault();e.stopPropagation();const el=e.currentTarget;setOpenVideos(p=>({...p,[ex.name]:!p[ex.name]}));setTimeout(()=>el.scrollIntoView({behavior:"smooth",block:"nearest"}),50);}}>
+                    <div className={`ex-vid-btn ${vidOpen?"":""}` } onClick={e=>{e.preventDefault();e.stopPropagation();setOpenVideos(p=>({...p,[ex.name]:!p[ex.name]}));}}>
                       {vidOpen?"▼ Hide":"▶ Demo"}
                     </div>
                   </div>
