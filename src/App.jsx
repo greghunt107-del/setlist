@@ -316,8 +316,18 @@ const ExerciseVideoDrawer = ({ exercise, open }) => {
 };
 
 const VideoOverlay = ({ exercise, onClose }) => {
+  const isSourceVideo = exercise.demoMode === "source_video" && exercise.sourceVideoId;
+  console.log('VideoOverlay received:', JSON.stringify(exercise));
   const { videoId, loading, title, fetch } = useExerciseVideo(exercise.name);
-  useEffect(() => { fetch(); }, []);
+  
+  useEffect(() => { 
+    if (!isSourceVideo) fetch(); 
+  }, []);
+
+  const embedSrc = isSourceVideo
+    ? `https://www.youtube.com/embed/${exercise.sourceVideoId}?start=${exercise.startSec||0}&autoplay=1&rel=0&modestbranding=1`
+    : videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1` : null;
+
   return (
     <div className="vid-overlay">
       <div className="vid-overlay-hdr">
@@ -325,15 +335,14 @@ const VideoOverlay = ({ exercise, onClose }) => {
         <div className="vid-overlay-title">{exercise.name}</div>
       </div>
       <div className="vid-overlay-body">
-        {loading ? (
+        {(loading && !isSourceVideo) ? (
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:200,gap:12,color:C.muted}}>
             <div className="wl">{[1,2,3,4,5].map(i=><div key={i} className="wb"/>)}</div>
             <div style={{fontSize:12}}>Finding demo...</div>
           </div>
-        ) : videoId ? (
+        ) : embedSrc ? (
           <div className="vid-overlay-player">
-            {console.log('DEMO DEBUG:', exercise.demoMode, exercise.sourceVideoId, exercise.startSec, videoId)}
-            <iframe src={exercise.demoMode==="source_video"&&exercise.sourceVideoId?`https://www.youtube.com/embed/${exercise.sourceVideoId}?start=${exercise.startSec||0}&autoplay=1&rel=0&modestbranding=1`:`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`} allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"/>
+            <iframe src={embedSrc} allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"/>
           </div>
         ) : (
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:200,gap:12,color:C.muted,background:C.surface,borderRadius:14}}>
@@ -349,12 +358,13 @@ const VideoOverlay = ({ exercise, onClose }) => {
             <span className="vid-key-pill">⏸ Rest {exercise.rest||"60s"}</span>
           </div>
           {exercise.notes && <div className="vid-overlay-notes" style={{marginTop:10}}>{exercise.notes}</div>}
+          {isSourceVideo && <div style={{fontSize:10,color:C.muted,marginTop:8}}>▶ Jumping to {Math.floor((exercise.startSec||0)/60)}:{String((exercise.startSec||0)%60).padStart(2,"0")} in original video</div>}
         </div>
         <button className="btn ghost" onClick={onClose}>← Back to Workout</button>
       </div>
     </div>
   );
-};
+};};
 
 export default function App() {
   const [tab, setTab] = useState("home");
