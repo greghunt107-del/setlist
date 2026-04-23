@@ -665,69 +665,69 @@ export default function App() {
   };
 
   const renderActiveWorkout=()=>{
-    if(!activeWorkout) return null;
-    const totalSets=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.length,0);
-    const doneSets=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
-    const pct=totalSets>0?Math.round(doneSets/totalSets*100):0;
-    return(
-      <>
-        {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>{setVideoOverlay(null);}}/>}
-        <div className="awrap" style={{display:videoOverlay?"none":"flex",flexDirection:"column"}}>
-          <div className="ahdr">
-            <div className="backbtn" onClick={()=>{setActiveWorkout(null);setVideoOverlay(null);setTab("home");}}>←</div>
-            <div className="dttitle" style={{fontSize:15}}>{activeWorkout.workoutTitle}</div>
-            <div className="atimer">{fmtTime(timerSec)}</div>
-          </div>
-          <div style={{padding:"10px 15px 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <span style={{fontSize:11,color:C.muted,fontWeight:600}}>{doneSets}/{totalSets} sets · {pct}%</span>
-            <span style={{fontSize:11,color:C.blueBright,fontWeight:700,cursor:"pointer"}} onClick={finishWorkout}>Finish ✓</span>
-          </div>
-          <div className="prog-bar-bg"><div className="prog-bar" style={{width:`${pct}%`}}/></div>
-          {activeWorkout.exercises.map((ex,ei)=>{
-            const allDone=ex.sets.every(s=>s.done);
-            const open=expandedEx===ei;
-            return(
-              <div key={`${ex.name}-${ei}`} className="aex-card" style={{borderColor:open?`${C.blueBright}55`:allDone?`${C.green}33`:C.border}}>
-                <div className="aex-header" onClick={()=>setExpandedEx(open?-1:ei)}>
-                  <span style={{fontSize:20}}>{EMO[ex.name]||"💪"}</span>
-                  <div className="aex-title">{ex.name}</div>
-                  <span className={allDone?"aex-status aex-done":"aex-status"}>{allDone?"✓ Done":`${ex.sets.filter(s=>s.done).length}/${ex.sets.length}`}</span>
-                  <span style={{color:C.muted,fontSize:13,marginLeft:4}}>{open?"▲":"▼"}</span>
-                </div>
-                {open&&(
-                  <>
-                    <div className="demo-btn" onClick={()=>setVideoOverlay(ex)}>
-                      <div className="pulse"/>
-                      <span>Watch Demo · {ex.name}</span>
-                      <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
-                    </div>
-                    <div className="set-rows">
-                      <div style={{display:"grid",gridTemplateColumns:"28px 1fr 1fr 1fr 36px",gap:8,paddingBottom:4}}>
-                        {["Set","Reps","Weight","Time",""].map((l,i)=><div key={i} className="set-col-lbl">{l}</div>)}
-                      </div>
-                      {ex.sets.map((s,si)=>(
-                        <div key={si} className="set-row" style={{background:s.done?`${C.green}0A`:C.surface,borderColor:s.done?`${C.green}33`:C.border}}>
-                          <div className="set-lbl">S{si+1}</div>
-                          <input className="set-input" placeholder="—" value={s.reps} onChange={e=>updateSet(ei,si,"reps",e.target.value)} inputMode="decimal" autoComplete="off"/>
-                          <input className="set-input" placeholder="lb" value={s.weight} onChange={e=>updateSet(ei,si,"weight",e.target.value)} inputMode="decimal" autoComplete="off"/>
-                          <input className="set-input" placeholder="—" value={s.time||""} onChange={e=>updateSet(ei,si,"time",e.target.value)} inputMode="decimal" autoComplete="off"/>
-                          <div className={`set-check ${s.done?"done":""}`} onClick={()=>toggleSetDone(ei,si)}>{s.done?"✓":"○"}</div>
-                        </div>
-                      ))}
-                      <div className="addset-btn" onClick={()=>addSet(ei)}>+ Add Set</div>
-                    </div>
-                  </>
-                )}
+  if(!activeWorkout) return null;
+  const totalSets=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.length,0);
+  const doneSets=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
+  const pct=totalSets>0?Math.round(doneSets/totalSets*100):0;
+  return(
+    <div style={{display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
+      {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}
+      <div className="ahdr">
+        <div className="backbtn" onClick={()=>{setActiveWorkout(null);setVideoOverlay(null);setTab("home");}}>←</div>
+        <div className="dttitle" style={{fontSize:15}}>{activeWorkout.workoutTitle}</div>
+        <div className="atimer">{fmtTime(timerSec)}</div>
+      </div>
+      <div style={{padding:"10px 15px 0",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+        <span style={{fontSize:11,color:C.muted,fontWeight:600}}>{doneSets}/{totalSets} sets · {pct}%</span>
+        <span style={{fontSize:11,color:C.blueBright,fontWeight:700,cursor:"pointer"}} onClick={finishWorkout}>Finish ✓</span>
+      </div>
+      <div className="prog-bar-bg" style={{flexShrink:0}}><div className="prog-bar" style={{width:`${pct}%`}}/></div>
+      <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",paddingBottom:20}}>
+        {activeWorkout.exercises.map((ex,ei)=>{
+          const allDone=ex.sets.every(s=>s.done);
+          const open=expandedEx===ei;
+          return(
+            <div key={`${ex.name}-${ei}`} className="aex-card" style={{borderColor:open?`${C.blueBright}55`:allDone?`${C.green}33`:C.border}}>
+              <div className="aex-header" onClick={()=>setExpandedEx(open?-1:ei)}>
+                <span style={{fontSize:20,flexShrink:0}}>{EMO[ex.name]||"💪"}</span>
+                <div className="aex-title">{ex.name}</div>
+                <span className={allDone?"aex-status aex-done":"aex-status"}>{allDone?"✓ Done":`${ex.sets.filter(s=>s.done).length}/${ex.sets.length}`}</span>
+                <span style={{color:C.muted,fontSize:13,marginLeft:4,flexShrink:0}}>{open?"▲":"▼"}</span>
               </div>
-            );
-          })}
+              {open&&(
+                <>
+                  <div className="demo-btn" onClick={()=>setVideoOverlay(ex)}>
+                    <div className="pulse"/>
+                    <span>Watch Demo · {ex.name}</span>
+                    <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
+                  </div>
+                  <div className="set-rows">
+                    <div style={{display:"grid",gridTemplateColumns:"28px 1fr 1fr 1fr 36px",gap:8,paddingBottom:4}}>
+                      {["Set","Reps","Weight","Time",""].map((l,i)=><div key={i} className="set-col-lbl">{l}</div>)}
+                    </div>
+                    {ex.sets.map((s,si)=>(
+                      <div key={si} className="set-row" style={{background:s.done?`${C.green}0A`:C.surface,borderColor:s.done?`${C.green}33`:C.border}}>
+                        <div className="set-lbl">S{si+1}</div>
+                        <input className="set-input" placeholder="—" value={s.reps} onChange={e=>updateSet(ei,si,"reps",e.target.value)} inputMode="decimal" autoComplete="off"/>
+                        <input className="set-input" placeholder="lb" value={s.weight} onChange={e=>updateSet(ei,si,"weight",e.target.value)} inputMode="decimal" autoComplete="off"/>
+                        <input className="set-input" placeholder="—" value={s.time||""} onChange={e=>updateSet(ei,si,"time",e.target.value)} inputMode="decimal" autoComplete="off"/>
+                        <div className={`set-check ${s.done?"done":""}`} onClick={()=>toggleSetDone(ei,si)}>{s.done?"✓":"○"}</div>
+                      </div>
+                    ))}
+                    <div className="addset-btn" onClick={()=>addSet(ei)}>+ Add Set</div>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
       <div style={{padding:"10px 15px 20px",flexShrink:0,background:C.bg,borderTop:`1px solid ${C.border}`}}>
         <button className="btn grn" onClick={finishWorkout}>✓ Finish & Log Workout</button>
       </div>
-    </>
+    </div>
   );
-  };
+};
 
   const LibraryScreen=()=>{
     const cats=["All",...Object.keys(MG),"Other"];
