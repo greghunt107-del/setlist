@@ -424,7 +424,9 @@ export default function App() {
         const text=data.content?.find(b=>b.type==="text")?.text||data.content?.[0]?.text||"";
         parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
       }
-      const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:parsed.videoId||null,youtubeId:parsed.videoId||null};
+      const workoutVideoId = parsed.videoId||null;
+const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId,youtubeId:workoutVideoId,
+  exerciseList:parsed.exerciseList?.map(ex=>({...ex,sourceVideoId:workoutVideoId}))};
       setImportUrl("");setImportCaption("");setLoading(false);
       setPendingWorkout(nw);setTab("review");
     }catch(e){console.error("Analysis error:",e);setLoading(false);showToast("Analysis failed — try again");}
