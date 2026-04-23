@@ -695,7 +695,7 @@ export default function App() {
               </div>
               {open&&(
                 <>
-                  <div className="demo-btn" onClick={()=>{alert(ex.name);setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||""});}}>
+                  <div className="demo-btn" onClick={()=>setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||""})}>
                     <div className="pulse"/>
                     <span>Watch Demo · {ex.name}</span>
                     <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
@@ -1116,7 +1116,7 @@ const renderMain=()=>{
         {showCreateEx&&<CreateExModal/>}
         <div className={`toast ${toast.show?"show":""}`}>{toast.msg}</div>
       </div>
-      {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}
+      {videoOverlay&&<div style={{position:"fixed",inset:0,background:"red",zIndex:99999,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:30}}>{videoOverlay.name}<button onClick={()=>setVideoOverlay(null)}>CLOSE</button></div>}
     </>
   );
 }
