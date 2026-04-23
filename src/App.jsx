@@ -430,7 +430,7 @@ export default function App() {
       }
       const workoutVideoId = parsed.videoId||null;
 const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId,youtubeId:workoutVideoId,
-  exerciseList:parsed.exerciseList?.map(ex=>({...ex,sourceVideoId:workoutVideoId}))};
+  exerciseList:parsed.exerciseList?.map(ex=>({...ex,sourceVideoId:workoutVideoId,demoMode:workoutVideoId?"source_video":(ex.demoMode||"generic_demo")}))};
       setImportUrl("");setImportCaption("");setLoading(false);
       setPendingWorkout(nw);setTab("review");
     }catch(e){console.error("Analysis error:",e);setLoading(false);showToast("Analysis failed — try again");}
