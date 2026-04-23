@@ -236,20 +236,13 @@ Return ONLY valid JSON, no markdown:
   parsed.exerciseList = interpolateGaps(parsed.exerciseList, videoDurationSec);
 
       } else if (videoDurationSec > 0) {
-        // TIER 3: No chapters, no transcript — distribute evenly, skip intro/outro
-        const start = Math.round(videoDurationSec * 0.08);
-        const end = Math.round(videoDurationSec * 0.88);
-        const count = parsed.exerciseList.length;
-
-        parsed.exerciseList = parsed.exerciseList.map((ex, i) => {
-          if (ex.startSec && ex.startSec > 0 && ex.startSec < videoDurationSec) {
-            return { ...ex, demoMode: 'source_video' };
-          }
-          const estimatedSec = count === 1
-            ? Math.round((start + end) / 2)
-            : Math.round(start + (i / (count - 1)) * (end - start));
-          return { ...ex, startSec: estimatedSec, demoMode: 'source_video' };
-        });
+// TIER 3: No chapters, no transcript — play from beginning
+          // Better to show full video than jump to wrong timestamp
+          parsed.exerciseList = parsed.exerciseList.map(ex => ({
+            ...ex,
+            startSec: 0,
+            demoMode: 'source_video'
+          }));
 
       } else {
         // TIER 4: Nothing — trust AI or fall back to generic
