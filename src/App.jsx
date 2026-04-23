@@ -696,7 +696,7 @@ export default function App() {
               </div>
               {open&&(
                 <>
-                  <div className="demo-btn" onClick={()=>setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||"",demoMode:ex.demoMode,startSec:ex.startSec,sourceVideoId:activeWorkout?.videoId||activeWorkout?.youtubeId})}>
+                  <div className="demo-btn" onClick={()=>{const srcWorkout=workouts.find(w=>w.id===activeWorkout.workoutId);setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||"",demoMode:ex.demoMode,startSec:ex.startSec,sourceVideoId:srcWorkout?.videoId||srcWorkout?.youtubeId});}}>
                     <div className="pulse"/>
                     <span>Watch Demo · {ex.name}</span>
                     <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
