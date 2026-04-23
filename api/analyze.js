@@ -1,5 +1,3 @@
-import { YoutubeTranscript } from 'youtube-transcript';
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -30,7 +28,6 @@ export default async function handler(req, res) {
         }
       } catch {}
 
-      // Fetch YouTube metadata
       if (videoId && process.env.YOUTUBE_API_KEY) {
         try {
           const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`);
@@ -42,16 +39,24 @@ export default async function handler(req, res) {
         } catch {}
       }
 
-      // Fetch YouTube captions/transcript
+      // Fetch YouTube auto-captions via timedtext API
       if (videoId) {
         try {
-          const transcriptData = await YoutubeTranscript.fetchTranscript(videoId);
-          if (transcriptData && transcriptData.length > 0) {
-            transcript = transcriptData.map(t => t.text).join(' ');
-            console.log('Transcript fetched successfully, length:', transcript.length);
+          const captionRes = await fetch(`https://www.youtube.com/api/timedtext?lang=en&v=${videoId}&fmt=json3`);
+          if (captionRes.ok) {
+            const captionData = await captionRes.json();
+            if (captionData?.events) {
+              transcript = captionData.events
+                .filter(e => e.segs)
+                .map(e => e.segs.map(s => s.utf8).join(''))
+                .join(' ')
+                .replace(/\n/g, ' ')
+                .trim();
+              console.log('Captions fetched, length:', transcript.length);
+            }
           }
-        } catch (transcriptErr) {
-          console.log('Transcript fetch failed:', transcriptErr.message);
+        } catch (captionErr) {
+          console.log('Caption fetch failed:', captionErr.message);
           transcript = '';
         }
       }
@@ -61,14 +66,13 @@ export default async function handler(req, res) {
     const hasCaption = caption && caption.trim().length > 0;
 
     console.log('Transcript available:', hasTranscript, 'Length:', transcript.length);
-    console.log('Description length:', videoDescription.length);
 
     const sourceBlock = `
 PLATFORM: ${platform}
 URL: ${url || 'none'}
 ${videoTitle ? `VIDEO TITLE: ${videoTitle}` : ''}
 ${videoDescription ? `VIDEO DESCRIPTION:\n${videoDescription.slice(0, 3000)}` : ''}
-${hasTranscript ? `VIDEO TRANSCRIPT (highest priority — use exact exercise names from here):\n${transcript.slice(0, 8000)}` : ''}
+${hasTranscript ? `VIDEO CAPTIONS (highest priority — use exact exercise names from here):\n${transcript.slice(0, 8000)}` : ''}
 ${hasCaption ? `USER-PROVIDED CAPTION:\n${caption}` : ''}
 `.trim();
 
@@ -77,12 +81,12 @@ ${hasCaption ? `USER-PROVIDED CAPTION:\n${caption}` : ''}
 ${sourceBlock}
 
 EXTRACTION RULES:
-1. PRESERVE EXACT NAMES: Use exact exercise names from the transcript. Do NOT simplify. Preserve modifiers: R/L, single-arm, alternating, offset, staggered, tempo, pulse, hold.
+1. PRESERVE EXACT NAMES: Use exact exercise names from the captions. Do NOT simplify. Preserve modifiers: R/L, single-arm, alternating, offset, staggered, tempo, pulse, hold.
 2. PRESERVE SECTIONS: Include warmup, main workout, finisher, cooldown if present.
 3. NO HALLUCINATION: Only include exercises explicitly mentioned. Prefer fewer correct exercises over many wrong ones.
 4. SETS/REPS/REST: Extract exact numbers. For timed exercises use "30s" in the reps field. Leave empty string if not mentioned.
 5. EQUIPMENT: Use exact equipment mentioned. Never substitute.
-6. WEIGHT: Always leave as empty string — user logs this themselves.
+6. WEIGHT: Always leave as empty string.
 
 Return ONLY valid JSON, no markdown:
 {
