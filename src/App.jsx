@@ -123,7 +123,7 @@ select.tinput{appearance:none;cursor:pointer}
 .vid-title{font-size:11px;font-weight:600;color:${C.accentDim};flex:1;line-height:1.3}
 .vid-src{font-size:10px;color:${C.muted}}
 
-.awrap{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:80px;-webkit-overflow-scrolling:touch}
+.awrap{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:100px;-webkit-overflow-scrolling:touch;position:relative}
 .ahdr{padding:52px 15px 11px;display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:10;background:${C.bg}EE;backdrop-filter:blur(14px);border-bottom:1px solid ${C.border}}
 .atimer{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:${C.blueBright};background:${C.blueGlow};padding:5px 11px;border-radius:9px;border:1px solid ${C.borderHi}}
 .prog-bar-bg{height:4px;background:${C.border};border-radius:4px;margin:0 15px 14px;overflow:hidden}
@@ -664,14 +664,14 @@ export default function App() {
     );
   };
 
-  const ActiveWorkoutScreen=()=>{
+  const renderActiveWorkout=()=>{
     if(!activeWorkout) return null;
     const totalSets=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.length,0);
     const doneSets=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
     const pct=totalSets>0?Math.round(doneSets/totalSets*100):0;
     return(
       <>
-        {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}
+        {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>{setVideoOverlay(null);}}/>}
         <div className="awrap" style={{display:videoOverlay?"none":"flex",flexDirection:"column"}}>
           <div className="ahdr">
             <div className="backbtn" onClick={()=>{setActiveWorkout(null);setVideoOverlay(null);setTab("home");}}>←</div>
@@ -687,7 +687,7 @@ export default function App() {
             const allDone=ex.sets.every(s=>s.done);
             const open=expandedEx===ei;
             return(
-              <div key={ei} className="aex-card" style={{borderColor:open?`${C.blueBright}55`:allDone?`${C.green}33`:C.border}}>
+              <div key={`${ex.name}-${ei}`} className="aex-card" style={{borderColor:open?`${C.blueBright}55`:allDone?`${C.green}33`:C.border}}>
                 <div className="aex-header" onClick={()=>setExpandedEx(open?-1:ei)}>
                   <span style={{fontSize:20}}>{EMO[ex.name]||"💪"}</span>
                   <div className="aex-title">{ex.name}</div>
@@ -721,10 +721,13 @@ export default function App() {
               </div>
             );
           })}
-          <div style={{padding:15}}><button className="btn grn" onClick={finishWorkout}>✓ Finish & Log Workout</button></div>
-        </div>
-      </>
-    );
+      </div>
+      <div style={{padding:"10px 15px 20px",flexShrink:0,background:C.bg,borderTop:`1px solid ${C.border}`}}>
+        <button className="btn grn" onClick={finishWorkout}>✓ Finish & Log Workout</button>
+      </div>
+    </>
+  );
+};
   };
 
   const LibraryScreen=()=>{
@@ -1084,7 +1087,7 @@ export default function App() {
 const renderMain=()=>{
     if(showCompletion) return <CompletionScreen/>;
     if(!onboarded) return <OnboardingScreen/>;
-    if(tab==="active") return <ActiveWorkoutScreen/>;
+    if(tab==="active") return renderActiveWorkout();
     if(tab==="detail") return <DetailScreen/>;
     if(tab==="review") return <ReviewScreen/>;
     if(tab==="import") return <ImportScreen/>;
