@@ -317,17 +317,11 @@ const ExerciseVideoDrawer = ({ exercise, open }) => {
 
 const VideoOverlay = ({ exercise, onClose }) => {
   const isSourceVideo = exercise.demoMode === "source_video" && exercise.sourceVideoId;
-  console.log('VideoOverlay received:', JSON.stringify(exercise));
-  const { videoId, loading, title, fetch } = useExerciseVideo(exercise.name);
-  
-  useEffect(() => { 
-    if (!isSourceVideo) fetch(); 
-  }, []);
-
+  const { videoId, loading, fetch } = useExerciseVideo(exercise.name);
+  useEffect(() => { if (!isSourceVideo) fetch(); }, []);
   const embedSrc = isSourceVideo
     ? `https://www.youtube.com/embed/${exercise.sourceVideoId}?start=${exercise.startSec||0}&autoplay=1&rel=0&modestbranding=1`
     : videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1` : null;
-
   return (
     <div className="vid-overlay">
       <div className="vid-overlay-hdr">
@@ -354,11 +348,11 @@ const VideoOverlay = ({ exercise, onClose }) => {
           <div className="vid-key-stat">
             <span className="vid-key-pill">🔁 {Array.isArray(exercise.sets)?exercise.sets.length:exercise.sets} sets</span>
             <span className="vid-key-pill">✕ {exercise.reps} reps</span>
-            {exercise.weight && <span className="vid-key-pill">⚖️ {exercise.weight}</span>}
+            {exercise.weight&&<span className="vid-key-pill">⚖️ {exercise.weight}</span>}
             <span className="vid-key-pill">⏸ Rest {exercise.rest||"60s"}</span>
           </div>
-          {exercise.notes && <div className="vid-overlay-notes" style={{marginTop:10}}>{exercise.notes}</div>}
-          {isSourceVideo && <div style={{fontSize:10,color:C.muted,marginTop:8}}>▶ Jumping to {Math.floor((exercise.startSec||0)/60)}:{String((exercise.startSec||0)%60).padStart(2,"0")} in original video</div>}
+          {exercise.notes&&<div className="vid-overlay-notes" style={{marginTop:10}}>{exercise.notes}</div>}
+          {isSourceVideo&&<div style={{fontSize:10,color:C.muted,marginTop:8}}>▶ Jumping to {Math.floor((exercise.startSec||0)/60)}:{String((exercise.startSec||0)%60).padStart(2,"0")} in original video</div>}
         </div>
         <button className="btn ghost" onClick={onClose}>← Back to Workout</button>
       </div>
