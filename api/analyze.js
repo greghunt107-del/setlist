@@ -120,7 +120,7 @@ Return ONLY valid JSON, no markdown, no explanation:
       "name": "Exact Exercise Name With Modifiers",
       "section": "Warmup|Main Workout|Finisher|Cooldown",
       "sets": "3 or empty string",
-      "reps": "12 or 30s or empty string",
+      "reps": "12 or 30s if timed — ALWAYS put timed exercises here as '30s' or '45s' not in a separate field",
       "rest": "30s or empty string",
       "weight": "",
       "confidence": "high|medium|low",
