@@ -332,6 +332,7 @@ const VideoOverlay = ({ exercise, onClose }) => {
           </div>
         ) : videoId ? (
           <div className="vid-overlay-player">
+            {console.log('DEMO DEBUG:', exercise.demoMode, exercise.sourceVideoId, exercise.startSec, videoId)}
             <iframe src={exercise.demoMode==="source_video"&&exercise.sourceVideoId?`https://www.youtube.com/embed/${exercise.sourceVideoId}?start=${exercise.startSec||0}&autoplay=1&rel=0&modestbranding=1`:`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`} allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"/>
           </div>
         ) : (
