@@ -199,6 +199,7 @@ select.tinput{appearance:none;cursor:pointer}
 .modal-bg{position:fixed;inset:0;background:#00000088;backdrop-filter:blur(6px);z-index:100;display:flex;flex-direction:column;justify-content:flex-end}
 .modal{background:${C.deep};border-top:1px solid ${C.borderHi};border-radius:24px 24px 0 0;padding:20px 18px 36px;display:flex;flex-direction:column;gap:13px;max-height:88vh;overflow-y:auto}
 .modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.3px}
+.confirm-modal{background:${C.deep};border-top:1px solid ${C.borderHi};border-radius:24px 24px 0 0;padding:28px 20px 36px;display:flex;flex-direction:column;gap:16px}
 
 .streak-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:11px}
 .streak-cell{background:${C.card};border:1px solid ${C.border};border-radius:13px;padding:13px 11px;text-align:center}
@@ -379,6 +380,7 @@ export default function App() {
   const [expandedEx, setExpandedEx] = useState(0);
   const [videoOverlay, setVideoOverlay] = useState(null);
   const [showCompletion, setShowCompletion] = useState(null);
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [pendingWorkout, setPendingWorkout] = useState(null);
   const [openVideos, setOpenVideos] = useState({});
   const timerRef = useRef(null);
@@ -453,7 +455,6 @@ export default function App() {
 
   const finishWorkout=()=>{
     if(!activeWorkout) return;
-if(!window.confirm("Finish workout and log it?")) return;
     const vol=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).reduce((b,s)=>{const r=parseFloat(s.reps)||0,w=parseFloat(s.weight)||1;return b+(r*w);},0),0);
     const log={id:Date.now(),workoutId:activeWorkout.workoutId,workoutTitle:activeWorkout.workoutTitle,date:new Date().toISOString(),duration:timerSec,totalVolume:Math.round(vol),exercises:activeWorkout.exercises};
     setHistory(p=>[log,...p]);
@@ -722,7 +723,7 @@ if(!window.confirm("Finish workout and log it?")) return;
         })}
       </div>
       <div style={{padding:"10px 15px 20px",flexShrink:0,background:C.bg,borderTop:`1px solid ${C.border}`}}>
-        <button className="btn grn" onClick={finishWorkout}>✓ Finish & Log Workout</button>
+        <button className="btn grn" onClick={()=>setShowFinishConfirm(true)}>✓ Finish & Log Workout</button>
       </div>
     </div>
   );
@@ -907,6 +908,20 @@ if(!window.confirm("Finish workout and log it?")) return;
       </div>
     );
   };
+
+  const FinishConfirmModal=()=>(
+  <div className="modal-bg" onClick={()=>setShowFinishConfirm(false)}>
+    <div className="confirm-modal" onClick={e=>e.stopPropagation()}>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontSize:36,marginBottom:12}}>🏁</div>
+        <div style={{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:800,marginBottom:8}}>Finish Workout?</div>
+        <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Are you sure you want to finish and log this workout?</div>
+      </div>
+      <button className="btn grn" onClick={()=>{setShowFinishConfirm(false);finishWorkout();}}>✓ Yes, Finish & Log</button>
+      <button className="btn ghost" onClick={()=>setShowFinishConfirm(false)}>← Keep Going</button>
+    </div>
+  </div>
+);
 
   const CreateExModal=()=>(
     <div className="modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowCreateEx(false);}}>
@@ -1113,6 +1128,7 @@ const renderMain=()=>{
             ))}
           </div>
  )}
+ {showFinishConfirm&&<FinishConfirmModal/>}
         {showCreateEx&&<CreateExModal/>}
         <div className={`toast ${toast.show?"show":""}`}>{toast.msg}</div>
       </div>
