@@ -671,7 +671,6 @@ export default function App() {
   const pct=totalSets>0?Math.round(doneSets/totalSets*100):0;
   return(
     <div style={{display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
-      {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}
       <div className="ahdr">
         <div className="backbtn" onClick={()=>{setActiveWorkout(null);setVideoOverlay(null);setTab("home");}}>←</div>
         <div className="dttitle" style={{fontSize:15}}>{activeWorkout.workoutTitle}</div>
@@ -1114,7 +1113,7 @@ const renderMain=()=>{
             ))}
           </div>
         )}
-        {videoOverlay&&tab!=="active"&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}
+        {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}videoOverlay&&<VideoOverlay
         {showCreateEx&&<CreateExModal/>}
         <div className={`toast ${toast.show?"show":""}`}>{toast.msg}</div>
       </div>
