@@ -67,14 +67,18 @@ export default async function handler(req, res) {
               }
             }
           }
-} catch (transcriptErr) {
-  console.log('Transcript extraction failed:', transcriptErr.message);
-  transcript = '';
-}
-   const hasTranscript = transcript.length > 100;
-console.log('Transcript available:', hasTranscript, 'Length:', transcript.length);
-console.log('Description length:', videoDescription.length);
+        } catch (transcriptErr) {
+          console.log('Transcript extraction failed:', transcriptErr.message);
+          transcript = '';
+        }
+      }
+    }
+
+    const hasTranscript = transcript.length > 100;
     const hasCaption = caption && caption.trim().length > 0;
+
+    console.log('Transcript available:', hasTranscript, 'Length:', transcript.length);
+    console.log('Description length:', videoDescription.length);
 
     const sourceBlock = `
 PLATFORM: ${platform}
@@ -101,9 +105,9 @@ EXTRACTION RULES — follow these exactly:
 
 5. EQUIPMENT FIDELITY: Use exact equipment mentioned. Do not substitute or generalize.
 
-6. SETS/REPS/REST: Extract exact numbers if stated. If not stated, leave as empty string — do NOT guess.
+6. SETS/REPS/REST: Extract exact numbers if stated. If not stated, leave as empty string. For timed exercises use format "30s" or "45s" in the reps field.
 
-7. TIMESTAMPS: If you can infer when an exercise starts/ends from the transcript, include startTime and endTime as "MM:SS" strings.
+7. TIMESTAMPS: If you can infer when an exercise starts from the transcript, include startTime as "MM:SS" string.
 
 Return ONLY valid JSON, no markdown, no explanation:
 {
@@ -114,19 +118,17 @@ Return ONLY valid JSON, no markdown, no explanation:
   "influencer": "@handle or empty string",
   "source": "${platform}",
   "notes": "one sentence about workout structure",
-  "sections": ["Warmup", "Main Workout", "Cooldown"],
   "exerciseList": [
     {
       "name": "Exact Exercise Name With Modifiers",
       "section": "Warmup|Main Workout|Finisher|Cooldown",
       "sets": "3 or empty string",
-      "reps": "12 or 30s if timed — ALWAYS put timed exercises here as '30s' or '45s' not in a separate field",
+      "reps": "12 or 30s if timed or empty string",
       "rest": "30s or empty string",
       "weight": "",
       "confidence": "high|medium|low",
       "notes": "form tip or uncertainty note",
-      "startTime": "05:24 or empty string",
-      "endTime": "06:55 or empty string"
+      "startTime": "05:24 or empty string"
     }
   ]
 }`;
