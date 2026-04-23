@@ -15,7 +15,7 @@ const STYLES = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;overflow-x:hidden}
 body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
-.app{width:100%;max-width:430px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.app{width:100%;max-width:430px;margin:0 auto;height:100svh;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .app::before{content:'';position:fixed;top:-180px;left:-80px;width:420px;height:420px;background:radial-gradient(circle,${C.blue}15 0%,transparent 70%);pointer-events:none;z-index:0}
 
 .hdr{padding:52px 18px 13px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;background:${C.bg}EE;backdrop-filter:blur(14px);border-bottom:1px solid ${C.border}}
@@ -61,7 +61,7 @@ body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-hei
 .slbl{font-size:9px;color:${C.muted};font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
 
 .flbl{font-size:10px;font-weight:700;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
-.tinput{background:${C.card};border:1.5px solid ${C.border};border-radius:13px;padding:13px 15px;color:${C.text};font-family:'Manrope',sans-serif;font-size:14px;width:100%;outline:none;transition:border-color .2s;resize:none}
+.tinput{background:${C.card};border:1.5px solid ${C.border};border-radius:13px;padding:13px 15px;color:${C.text};font-family:'Manrope',sans-serif;font-size:14px;width:100%;outline:none;transition:border-color .2s;resize:none;box-sizing:border-box}
 .tinput:focus{border-color:${C.blueBright}66}
 .tinput::placeholder{color:${C.muted}}
 select.tinput{appearance:none;cursor:pointer}
@@ -188,6 +188,8 @@ select.tinput{appearance:none;cursor:pointer}
 .bnameinput{background:transparent;border:none;outline:none;font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:${C.text};width:100%;letter-spacing:-.3px}
 .bnameinput::placeholder{color:${C.muted}}
 .bexitem{background:${C.card};border:1px solid ${C.border};border-radius:13px;padding:11px 13px;display:flex;align-items:center;gap:9px}
+.review-input{background:${C.card};border:1.5px solid ${C.border};border-radius:10px;padding:0;height:36px;line-height:36px;color:${C.text};font-family:'DM Mono',monospace;font-size:13px;width:100%;outline:none;text-align:center;transition:border-color .2s;resize:none;box-sizing:border-box;display:block}
+.review-input:focus{border-color:${C.blueBright}66}
 .rmbtn{width:27px;height:27px;border-radius:7px;background:${C.surface};border:1px solid ${C.border};color:${C.muted};display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:all .15s;flex-shrink:0}
 .rmbtn:active{background:#FF4D4D22;border-color:#FF4D4D55;color:${C.red}}
 .picker{background:${C.surface};border:1px solid ${C.border};border-radius:17px;padding:15px;max-height:300px;overflow-y:auto}
@@ -1032,7 +1034,7 @@ export default function App() {
                 {[["Sets",ex.sets||ex.Sets,"sets"],["Reps",ex.reps||ex.Reps,"reps"],["Rest",ex.rest||ex.Rest,"rest"]].map(([lbl,val,field])=>(
                   <div key={field}>
                     <div style={{fontSize:8,color:C.muted,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:3}}>{lbl}</div>
-                    <input className="tinput" value={val||""} onChange={e=>updateExercise(i,field,e.target.value)} style={{padding:"6px 8px",fontSize:12,textAlign:"center",height:"36px",lineHeight:"1"}} autoComplete="off" inputMode="decimal"/>
+                    <input className="review-input" value={val||""} onChange={e=>updateExercise(i,field,e.target.value)} autoComplete="off" inputMode="decimal"/>
                   </div>
                 ))}
               </div>
