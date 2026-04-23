@@ -67,13 +67,13 @@ export default async function handler(req, res) {
               }
             }
           }
-        } catch (transcriptErr) {
-          console.log('Transcript extraction failed:', transcriptErr.message);
-        }
-      }
-    }
-
-    const hasTranscript = transcript.length > 100;
+} catch (transcriptErr) {
+  console.log('Transcript extraction failed:', transcriptErr.message);
+  transcript = '';
+}
+   const hasTranscript = transcript.length > 100;
+console.log('Transcript available:', hasTranscript, 'Length:', transcript.length);
+console.log('Description length:', videoDescription.length);
     const hasCaption = caption && caption.trim().length > 0;
 
     const sourceBlock = `
