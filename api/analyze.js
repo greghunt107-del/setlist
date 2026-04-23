@@ -119,8 +119,7 @@ export default async function handler(req, res) {
     const timedTranscriptBlock = hasTranscript && !hasChapters
       ? `TIMED TRANSCRIPT (format [mm:ss] spoken words):\n${
           timedTranscript
-            .filter((_, i) => i % 3 === 0)
-            .slice(0, 150)
+            .slice(0, 300)
             .map(e => `[${formatTime(e.startSec)}] ${e.text}`)
             .join(' ')
         }`
