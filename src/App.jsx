@@ -129,7 +129,7 @@ select.tinput{appearance:none;cursor:pointer}
 .prog-bar-bg{height:4px;background:${C.border};border-radius:4px;margin:0 15px 14px;overflow:hidden}
 .prog-bar{height:4px;background:${C.blueBright};border-radius:4px;transition:width .4s}
 
-.vid-overlay{position:fixed;inset:0;background:#000000EE;z-index:200;display:flex;flex-direction:column;animation:fadeIn .2s ease}
+.vid-overlay{position:fixed.vid-overlay{position:fixed;inset:0;background:#000000EE;z-index:9999;display:flex;flex-direction:column;animation:fadeIn .2s ease};inset:0;background:#000000EE;z-index:9999;display:flex;flex-direction:column;animation:fadeIn .2s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .vid-overlay-hdr{padding:52px 16px 14px;display:flex;align-items:center;gap:12px;background:${C.bg};border-bottom:1px solid ${C.border}}
 .vid-overlay-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;flex:1}
@@ -1112,11 +1112,11 @@ const renderMain=()=>{
               </div>
             ))}
           </div>
-        )}
-{videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}
+ )}
         {showCreateEx&&<CreateExModal/>}
         <div className={`toast ${toast.show?"show":""}`}>{toast.msg}</div>
       </div>
+      {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}
     </>
   );
 }
