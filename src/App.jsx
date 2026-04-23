@@ -650,12 +650,11 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
                   </div>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
                     {analytics.prByExercise[ex.name]&&<div style={{fontSize:10,color:C.gold,fontWeight:700}}>PR {analytics.prByExercise[ex.name]}lb</div>}
-                    <div className="ex-vid-btn" onClick={e=>{e.preventDefault();e.stopPropagation();setOpenVideos(p=>({...p,[ex.name]:!p[ex.name]}));}}>
-                      {vidOpen?"▼ Hide":"▶ Demo"}
+<div className="ex-vid-btn" onClick={e=>{e.preventDefault();e.stopPropagation();setVideoOverlay({name:ex.name,sets:ex.sets||"3",reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||"",demoMode:ex.demoMode,startSec:ex.startSec,sourceVideoId:w.videoId||w.youtubeId});}}>
+                    ▶ Demo
                     </div>
                   </div>
                 </div>
-                <ExerciseVideoDrawer exercise={ex} open={!!vidOpen}/>
               </div>
             );
           })}
