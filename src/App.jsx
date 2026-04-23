@@ -1116,7 +1116,6 @@ const renderMain=()=>{
         {showCreateEx&&<CreateExModal/>}
         <div className={`toast ${toast.show?"show":""}`}>{toast.msg}</div>
       </div>
-      {videoOverlay&&<div style={{position:"fixed",inset:0,background:"red",zIndex:99999,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:30}}>{videoOverlay.name}<button onClick={()=>setVideoOverlay(null)}>CLOSE</button></div>}
-    </>
+{videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}    </>
   );
 }
