@@ -453,6 +453,7 @@ export default function App() {
 
   const finishWorkout=()=>{
     if(!activeWorkout) return;
+if(!window.confirm("Finish workout and log it?")) return;
     const vol=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).reduce((b,s)=>{const r=parseFloat(s.reps)||0,w=parseFloat(s.weight)||1;return b+(r*w);},0),0);
     const log={id:Date.now(),workoutId:activeWorkout.workoutId,workoutTitle:activeWorkout.workoutTitle,date:new Date().toISOString(),duration:timerSec,totalVolume:Math.round(vol),exercises:activeWorkout.exercises};
     setHistory(p=>[log,...p]);
