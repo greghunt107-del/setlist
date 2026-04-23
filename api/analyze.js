@@ -12,6 +12,7 @@ export default async function handler(req, res) {
     let videoDescription = '';
     let transcript = '';
     let platform = 'Other';
+    let chapters = [];
 
     if (url) {
       if (url.includes('youtube.com') || url.includes('youtu.be')) platform = 'YouTube';
@@ -39,7 +40,28 @@ export default async function handler(req, res) {
         } catch {}
       }
 
-      // Fetch YouTube auto-captions via timedtext API
+      // Parse YouTube chapters from description
+      // Format: "0:00 Exercise Name" or "00:00 Exercise Name" or "0:00:00 Exercise Name"
+      if (videoDescription) {
+        const lines = videoDescription.split('\n');
+        const chapterRegex = /^(\d{1,2}:\d{2}(?::\d{2})?)\s+(.+)$/;
+        for (const line of lines) {
+          const match = line.trim().match(chapterRegex);
+          if (match) {
+            const timeStr = match[1];
+            const label = match[2].trim();
+            // Convert time to seconds
+            const parts = timeStr.split(':').map(Number);
+            let seconds = 0;
+            if (parts.length === 2) seconds = parts[0] * 60 + parts[1];
+            if (parts.length === 3) seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+            chapters.push({ label, startSec: seconds, timeStr });
+          }
+        }
+        console.log('Chapters found:', chapters.length, chapters.map(c => `${c.timeStr} ${c.label}`).join(', '));
+      }
+
+      // Fetch YouTube captions
       if (videoId) {
         try {
           const captionRes = await fetch(`https://www.youtube.com/api/timedtext?lang=en&v=${videoId}&fmt=json3`);
@@ -52,7 +74,6 @@ export default async function handler(req, res) {
                 .join(' ')
                 .replace(/\n/g, ' ')
                 .trim();
-              console.log('Captions fetched, length:', transcript.length);
             }
           }
         } catch (captionErr) {
@@ -64,15 +85,19 @@ export default async function handler(req, res) {
 
     const hasTranscript = transcript.length > 100;
     const hasCaption = caption && caption.trim().length > 0;
+    const hasChapters = chapters.length > 0;
 
-    console.log('Transcript available:', hasTranscript, 'Length:', transcript.length);
+    const chaptersBlock = hasChapters
+      ? `YOUTUBE CHAPTERS (use these for exercise names and timestamps — high confidence):\n${chapters.map(c => `${c.timeStr} ${c.label}`).join('\n')}`
+      : '';
 
     const sourceBlock = `
 PLATFORM: ${platform}
 URL: ${url || 'none'}
 ${videoTitle ? `VIDEO TITLE: ${videoTitle}` : ''}
 ${videoDescription ? `VIDEO DESCRIPTION:\n${videoDescription.slice(0, 3000)}` : ''}
-${hasTranscript ? `VIDEO CAPTIONS (highest priority — use exact exercise names from here):\n${transcript.slice(0, 8000)}` : ''}
+${chaptersBlock}
+${hasTranscript ? `VIDEO CAPTIONS:\n${transcript.slice(0, 6000)}` : ''}
 ${hasCaption ? `USER-PROVIDED CAPTION:\n${caption}` : ''}
 `.trim();
 
@@ -81,12 +106,13 @@ ${hasCaption ? `USER-PROVIDED CAPTION:\n${caption}` : ''}
 ${sourceBlock}
 
 EXTRACTION RULES:
-1. PRESERVE EXACT NAMES: Use exact exercise names from the captions. Do NOT simplify. Preserve modifiers: R/L, single-arm, alternating, offset, staggered, tempo, pulse, hold.
-2. PRESERVE SECTIONS: Include warmup, main workout, finisher, cooldown if present.
-3. NO HALLUCINATION: Only include exercises explicitly mentioned. Prefer fewer correct exercises over many wrong ones.
-4. SETS/REPS/REST: Extract exact numbers. For timed exercises use "30s" in the reps field. Leave empty string if not mentioned.
-5. EQUIPMENT: Use exact equipment mentioned. Never substitute.
+1. CHAPTERS ARE GOLD: If YouTube chapters are provided above, use them as the primary source for exercise names and order. They are the most reliable signal.
+2. PRESERVE EXACT NAMES: Use exact names from chapters. Do not simplify or normalize.
+3. TIMESTAMPS: If chapters are provided, assign startSec from the chapter timestamp for each matching exercise. This enables timestamp-based demo videos.
+4. SETS/REPS/REST: Extract from captions/description. For timed exercises like "30 seconds on, 30 seconds off", set reps="30s" and rest="30s". If a circuit repeats, set sets accordingly.
+5. NO HALLUCINATION: Only include exercises from chapters or clearly mentioned in captions.
 6. WEIGHT: Always leave as empty string.
+7. demoMode: Set to "source_video" if you have a reliable startSec from chapters. Otherwise set to "generic_demo".
 
 Return ONLY valid JSON, no markdown:
 {
@@ -99,13 +125,15 @@ Return ONLY valid JSON, no markdown:
   "notes": "one sentence about workout structure",
   "exerciseList": [
     {
-      "name": "Exact Exercise Name With Modifiers",
+      "name": "Exact Exercise Name",
       "section": "Warmup|Main Workout|Finisher|Cooldown",
-      "sets": "3 or empty string",
-      "reps": "12 or 30s or empty string",
-      "rest": "30s or empty string",
+      "sets": "2",
+      "reps": "30s",
+      "rest": "30s",
       "weight": "",
-      "notes": "form tip or empty string"
+      "notes": "form tip or empty string",
+      "demoMode": "source_video|generic_demo",
+      "startSec": 40
     }
   ]
 }`;
@@ -120,7 +148,7 @@ Return ONLY valid JSON, no markdown:
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 4000,
-        system: 'You are a fitness workout extraction specialist. Always respond with valid JSON only. No markdown. No explanation. Preserve exact exercise names from source material.',
+        system: 'You are a fitness workout extraction specialist. Always respond with valid JSON only. No markdown. No explanation. Preserve exact exercise names. Use chapter timestamps when available.',
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -130,6 +158,23 @@ Return ONLY valid JSON, no markdown:
     const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(clean);
     if (videoId) parsed.videoId = videoId;
+
+    // Post-process: match chapters to exercises and assign timestamps
+    if (chapters.length > 0 && parsed.exerciseList) {
+      parsed.exerciseList = parsed.exerciseList.map(ex => {
+        // Find best matching chapter
+        const match = chapters.find(c =>
+          c.label.toLowerCase().includes(ex.name.toLowerCase()) ||
+          ex.name.toLowerCase().includes(c.label.toLowerCase()) ||
+          c.label.toLowerCase() === ex.name.toLowerCase()
+        );
+        if (match && !ex.startSec) {
+          return { ...ex, startSec: match.startSec, demoMode: 'source_video' };
+        }
+        return ex;
+      });
+    }
+
     res.status(200).json(parsed);
 
   } catch (err) {

@@ -332,7 +332,7 @@ const VideoOverlay = ({ exercise, onClose }) => {
           </div>
         ) : videoId ? (
           <div className="vid-overlay-player">
-            <iframe src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`} allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"/>
+            <iframe src={exercise.demoMode==="source_video"&&exercise.sourceVideoId?`https://www.youtube.com/embed/${exercise.sourceVideoId}?start=${exercise.startSec||0}&autoplay=1&rel=0&modestbranding=1`:`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`} allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"/>
           </div>
         ) : (
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:200,gap:12,color:C.muted,background:C.surface,borderRadius:14}}>
@@ -696,7 +696,7 @@ export default function App() {
               </div>
               {open&&(
                 <>
-                  <div className="demo-btn" onClick={()=>setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||""})}>
+                  <div className="demo-btn" onClick={()=>setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||"",demoMode:ex.demoMode,startSec:ex.startSec,sourceVideoId:activeWorkout?.videoId||activeWorkout?.youtubeId})}>
                     <div className="pulse"/>
                     <span>Watch Demo · {ex.name}</span>
                     <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
