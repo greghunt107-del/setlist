@@ -320,7 +320,7 @@ const VideoOverlay = ({ exercise, onClose }) => {
   const { videoId, loading, fetch } = useExerciseVideo(exercise.name);
   useEffect(() => { if (!isSourceVideo) fetch(); }, []);
   const embedSrc = isSourceVideo
-    ? `https://www.youtube.com/embed/${exercise.sourceVideoId}?start=${exercise.startSec||0}&autoplay=1&rel=0&modestbranding=1`
+    ? `https://www.youtube.com/embed/${exercise.sourceVideoId}?start=${exercise.startSec||0}&autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`
     : videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1` : null;
   return (
     <div className="vid-overlay">
