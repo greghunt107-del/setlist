@@ -219,23 +219,22 @@ Return ONLY valid JSON, no markdown:
         // Interpolate any exercises that didn't match a chapter
         parsed.exerciseList = interpolateGaps(parsed.exerciseList, videoDurationSec);
 
-      } else if (hasTranscript) {
-        // TIER 2: Use timed transcript to find/refine each exercise's timestamp
-        parsed.exerciseList = parsed.exerciseList.map(ex => {
-          if (ex.startSec && ex.startSec > 0 && videoDurationSec && ex.startSec < videoDurationSec) {
-            // AI gave a timestamp — refine it using a ±60s transcript search
-            const refined = refineWithTranscript(ex.name, ex.startSec, timedTranscript, videoDurationSec);
-            return { ...ex, startSec: refined, demoMode: 'source_video' };
-          }
-          // No AI timestamp — search full transcript for first mention
-          const found = findInTranscript(ex.name, timedTranscript);
-          if (found !== null) {
-            return { ...ex, startSec: found, demoMode: 'source_video' };
-          }
-          return { ...ex, demoMode: 'generic_demo' };
-        });
-        // Interpolate gaps between transcript-matched exercises
-        parsed.exerciseList = interpolateGaps(parsed.exerciseList, videoDurationSec);
+} else if (hasTranscript) {
+  // TIER 2: Trust AI timestamps — it saw the full timed transcript in context
+  // Only use transcript search as fallback for exercises with no timestamp at all
+  parsed.exerciseList = parsed.exerciseList.map(ex => {
+    if (ex.startSec && ex.startSec > 0 && (!videoDurationSec || ex.startSec < videoDurationSec)) {
+      // AI gave a valid timestamp — trust it directly
+      return { ...ex, demoMode: 'source_video' };
+    }
+    // No timestamp from AI — try transcript search as last resort
+    const found = findInTranscript(ex.name, timedTranscript);
+    if (found !== null) {
+      return { ...ex, startSec: found, demoMode: 'source_video' };
+    }
+    return { ...ex, demoMode: 'generic_demo' };
+  });
+  parsed.exerciseList = interpolateGaps(parsed.exerciseList, videoDurationSec);
 
       } else if (videoDurationSec > 0) {
         // TIER 3: No chapters, no transcript — distribute evenly, skip intro/outro
