@@ -695,7 +695,7 @@ export default function App() {
               </div>
               {open&&(
                 <>
-                  <div className="demo-btn" onClick={()=>setVideoOverlay(ex)}>
+                  <div className="demo-btn" onClick={()=>setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||""})}>
                     <div className="pulse"/>
                     <span>Watch Demo · {ex.name}</span>
                     <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
