@@ -342,7 +342,7 @@ const VideoOverlay = ({ exercise, onClose }) => {
         <div className="vid-overlay-info">
           <div className="vid-overlay-noteslbl">Exercise Details</div>
           <div className="vid-key-stat">
-            <span className="vid-key-pill">🔁 {exercise.sets} sets</span>
+            <span className="vid-key-pill">🔁 {Array.isArray(exercise.sets)?exercise.sets.length:exercise.sets} sets</span>
             <span className="vid-key-pill">✕ {exercise.reps} reps</span>
             {exercise.weight && <span className="vid-key-pill">⚖️ {exercise.weight}</span>}
             <span className="vid-key-pill">⏸ Rest {exercise.rest||"60s"}</span>
