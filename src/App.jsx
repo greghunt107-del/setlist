@@ -1113,7 +1113,7 @@ const renderMain=()=>{
             ))}
           </div>
         )}
-        {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}videoOverlay&&<VideoOverlay
+{videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}
         {showCreateEx&&<CreateExModal/>}
         <div className={`toast ${toast.show?"show":""}`}>{toast.msg}</div>
       </div>
