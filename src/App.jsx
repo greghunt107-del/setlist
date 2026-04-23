@@ -364,7 +364,6 @@ const VideoOverlay = ({ exercise, onClose }) => {
       </div>
     </div>
   );
-};};
 
 export default function App() {
   const [tab, setTab] = useState("home");
