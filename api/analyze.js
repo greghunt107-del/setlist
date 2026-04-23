@@ -59,25 +59,34 @@ export default async function handler(req, res) {
         }
       }
 
-      // Parse chapters from description
-      if (videoDescription) {
-        const lines = videoDescription.split('\n');
-        const chapterRegex = /^(\d{1,2}:\d{2}(?::\d{2})?)\s+(.+)$/;
-        for (const line of lines) {
-          const match = line.trim().match(chapterRegex);
-          if (match) {
-            const timeStr = match[1];
-            const label = match[2].trim();
-            const parts = timeStr.split(':').map(Number);
-            let seconds = 0;
-            if (parts.length === 2) seconds = parts[0] * 60 + parts[1];
-            if (parts.length === 3) seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
-            chapters.push({ label, startSec: seconds, timeStr });
-          }
+// Parse chapters from description using broadened timestamp regex
+        if (videoDescription) {
+          chapters = parseTimestamps(videoDescription);
+          console.log(`Chapters: ${chapters.length}`, chapters.map(c => `${c.timeStr} ${c.label}`).join(', '));
         }
-        console.log(`Chapters: ${chapters.length}`, chapters.map(c => `${c.timeStr} ${c.label}`).join(', '));
-      }
+// If no chapters found, try fetching timestamps from top comments
+      if (chapters.length === 0 && videoId && process.env.YOUTUBE_API_KEY) {
+        try {
+          const commentRes = await fetch(
+            `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&order=relevance&maxResults=5&key=${process.env.YOUTUBE_API_KEY}`
+          );
+          const commentData = await commentRes.json();
+          const comments = commentData.items || [];
 
+          for (const item of comments) {
+            const text = item.snippet?.topLevelComment?.snippet?.textDisplay || '';
+            // Try parsing timestamps from comment text
+            const commentChapters = parseTimestamps(text);
+            if (commentChapters.length >= 3) {
+              chapters = commentChapters;
+              console.log(`Chapters from comment: ${chapters.length}`, chapters.map(c => `${c.timeStr} ${c.label}`).join(', '));
+              break;
+            }
+          }
+        } catch (e) {
+          console.log('Comment fetch failed:', e.message);
+        }
+      }
       // Fetch TIMED captions — preserve timing data
       if (videoId) {
         try {
@@ -344,4 +353,54 @@ function interpolateGaps(exercises, videoDurationSec) {
     const interpolated = Math.round(prevSec + ((gapPos + 1) / (gapCount + 1)) * (nextSec - prevSec));
     return { ...ex, startSec: interpolated, demoMode: 'source_video' };
   });
+}
+// Parse timestamps from any text — handles multiple formats:
+// "0:40 Jumping Jacks"  (standard chapters format)
+// "Jumping Jacks - 0:40"  (name first)
+// "Jumping Jacks .... 0:40"  (name with dots)
+// "1. Jumping Jacks 0:40"  (numbered list)
+function parseTimestamps(text) {
+  const results = [];
+  const lines = text.replace(/<br>/g, '\n').split('\n');
+
+  const patterns = [
+    /^(\d{1,2}:\d{2}(?::\d{2})?)\s+(.+)$/,
+    /^(?:\d+\.\s*)?(.+?)\s*[-:–—]+\s*(\d{1,2}:\d{2}(?::\d{2})?)$/,
+    /^(?:\d+\.\s*)?(.+?)\s*\.{2,}\s*(\d{1,2}:\d{2}(?::\d{2})?)$/,
+    /^(?:\d+\.\s*)?(.+?)\s+(\d{1,2}:\d{2}(?::\d{2})?)$/,
+  ];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    for (let i = 0; i < patterns.length; i++) {
+      const match = trimmed.match(patterns[i]);
+      if (match) {
+        let timeStr, label;
+        if (i === 0) {
+          timeStr = match[1];
+          label = match[2].trim();
+        } else {
+          label = match[1].trim();
+          timeStr = match[2];
+        }
+
+        if (label.length < 3 || label.includes('http')) continue;
+
+        const parts = timeStr.split(':').map(Number);
+        let seconds = 0;
+        if (parts.length === 2) seconds = parts[0] * 60 + parts[1];
+        if (parts.length === 3) seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+
+        results.push({ label, startSec: seconds, timeStr });
+        break;
+      }
+    }
+  }
+
+  const seen = new Set();
+  return results
+    .filter(r => { const key = r.timeStr; if (seen.has(key)) return false; seen.add(key); return true; })
+    .sort((a, b) => a.startSec - b.startSec);
 }
