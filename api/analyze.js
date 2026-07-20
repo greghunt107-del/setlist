@@ -24,6 +24,7 @@ const PRICING = {
   'claude-opus-4-8': { in: 5, out: 25 },
   'claude-sonnet-5': { in: 3, out: 15 },
   'gemini-3.5-flash': { in: 1.5, out: 9 },
+  'gemini-3.1-flash-lite': { in: 0.25, out: 1.5 },
 };
 const usdCost = (model, inTok, outTok) => {
   const p = PRICING[model];
@@ -597,48 +598,57 @@ Return ONLY valid JSON:
   ]
 }`;
 
-  // Transient overload/rate-limit errors are common on video-analysis calls —
-  // retry once after a short backoff before giving up and degrading to the
-  // text-only fallback path.
+  // Transient overload/rate-limit errors are common on video-analysis calls.
+  // Primary model gets one retry after backoff; if it's still down, fall back
+  // to a second model entirely rather than degrading straight to the much
+  // weaker text-only path — verified in testing that when the primary model
+  // is genuinely unavailable, a fallback model still analyzing the actual
+  // video beats losing per-exercise granularity altogether.
+  const MODEL_CHAIN = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
   const RETRYABLE_STATUS = new Set([429, 500, 503]);
-  let data;
-  for (let attempt = 0; ; attempt++) {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { file_data: { file_uri: url } },
-              { text: prompt },
-            ],
-          }],
-          generationConfig: { response_mime_type: 'application/json' },
-        }),
+  let data, usedModel;
+  outer: for (const model of MODEL_CHAIN) {
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { file_data: { file_uri: url } },
+                { text: prompt },
+              ],
+            }],
+            generationConfig: { response_mime_type: 'application/json' },
+          }),
+        }
+      );
+
+      if (res.ok) { data = await res.json(); usedModel = model; break outer; }
+
+      const errBody = await res.text();
+      if (RETRYABLE_STATUS.has(res.status) && attempt === 0) {
+        console.log(`Gemini ${model} ${res.status} (transient) — retrying once after backoff`);
+        await new Promise(r => setTimeout(r, 4000));
+        continue;
       }
-    );
-
-    if (res.ok) { data = await res.json(); break; }
-
-    const errBody = await res.text();
-    if (RETRYABLE_STATUS.has(res.status) && attempt === 0) {
-      console.log(`Gemini API ${res.status} (transient) — retrying once after backoff`);
-      await new Promise(r => setTimeout(r, 4000));
-      continue;
+      if (RETRYABLE_STATUS.has(res.status) && model !== MODEL_CHAIN[MODEL_CHAIN.length - 1]) {
+        console.log(`Gemini ${model} ${res.status} — falling back to next model in chain`);
+        break; // move to next model in MODEL_CHAIN
+      }
+      throw new Error(`Gemini API (${model}) ${res.status}: ${errBody.slice(0, 300)}`);
     }
-    throw new Error(`Gemini API ${res.status}: ${errBody.slice(0, 300)}`);
   }
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   const parsed = JSON.parse(extractFirstJsonObject(text));
-  console.log(`Gemini: ${parsed.exercises?.length ?? 0} exercises from video`);
+  console.log(`Gemini (${usedModel}): ${parsed.exercises?.length ?? 0} exercises from video`);
   if (metrics) {
-    const model = 'gemini-3.5-flash';
     // Gemini bills thinking tokens as output; candidatesTokenCount alone undercounts.
     const inTok = data.usageMetadata?.promptTokenCount;
     const outTok = (data.usageMetadata?.candidatesTokenCount || 0) + (data.usageMetadata?.thoughtsTokenCount || 0);
-    metrics.pipelines.gemini = { ms: Date.now() - start, model, inTok, outTok, costUsd: usdCost(model, inTok, outTok) };
+    metrics.pipelines.gemini = { ms: Date.now() - start, model: usedModel, inTok, outTok, costUsd: usdCost(usedModel, inTok, outTok) };
   }
   return parsed;
 }
