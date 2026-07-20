@@ -110,7 +110,7 @@ Reconcile them:
 // Map merged canonical form → app shape, stamping the required data-model
 // fields (creator/source/timestamp) onto every exercise.
 function finalizeWorkout(textOut, merged, url, platform) {
-  const videoId = textOut?.videoId ?? null;
+  const videoId = textOut?.videoId ?? extractYouTubeVideoId(url);
   return {
     title: merged.title,
     tag: merged.tag,
@@ -187,6 +187,18 @@ function detectPlatform(url) {
   if (url.includes('instagram.com')) return 'Instagram';
   if (url.includes('tiktok.com')) return 'TikTok';
   return 'Other';
+}
+
+// Parsed independently of both extraction pipelines, so the thumbnail and
+// "watch in video" jump still work even when the text pipeline fails and
+// only Gemini's output survives.
+function extractYouTubeVideoId(url) {
+  if (!url) return null;
+  try {
+    if (url.includes('youtube.com/watch')) return new URL(url).searchParams.get('v');
+    if (url.includes('youtu.be/')) return url.split('youtu.be/')[1]?.split('?')[0] || null;
+  } catch {}
+  return null;
 }
 
 // ── Text pipeline: metadata + chapters + transcript + caption → Claude ───────
