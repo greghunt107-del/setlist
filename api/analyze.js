@@ -1,3 +1,5 @@
+import Anthropic from '@anthropic-ai/sdk';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -7,6 +9,188 @@ export default async function handler(req, res) {
 
   try {
     const { url, caption } = req.body;
+    const parsed = await runHybridExtraction({ url, caption });
+    res.status(200).json(parsed);
+  } catch (err) {
+    console.error('Analyze error:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// ── Hybrid extraction: both pipelines in parallel → Claude merge ─────────────
+export async function runHybridExtraction({ url, caption }) {
+  const [textRes, geminiRes] = await Promise.allSettled([
+    runTextPipeline({ url, caption }),
+    runGeminiVideo({ url }),
+  ]);
+
+  const textOut = textRes.status === 'fulfilled' ? textRes.value : null;
+  const geminiOut = geminiRes.status === 'fulfilled' ? geminiRes.value : null;
+  if (textRes.status === 'rejected') console.log('Text pipeline failed:', textRes.reason?.message);
+  if (geminiRes.status === 'rejected') console.log('Gemini pipeline failed:', geminiRes.reason?.message);
+
+  if (!textOut && !geminiOut) throw new Error('Both extraction pipelines failed');
+
+  const platform = detectPlatform(url);
+  // Only one pipeline survived — skip the merge, map directly
+  if (!geminiOut) return finalizeWorkout(textOut, mergeFromTextOnly(textOut), url, platform);
+  if (!textOut) return finalizeWorkout(null, mergeFromGeminiOnly(geminiOut), url, platform);
+
+  const merged = await mergeWithClaude({ textOut, geminiOut, url, platform });
+  return finalizeWorkout(textOut, merged, url, platform);
+}
+
+const MERGE_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['title', 'tag', 'duration', 'level', 'creator_handle', 'notes', 'exercises'],
+  properties: {
+    title: { type: 'string' },
+    tag: { type: 'string', enum: ['HIIT', 'Strength', 'Cardio', 'Yoga', 'Core', 'Full Body', 'Mobility'] },
+    duration: { type: 'integer' },
+    level: { type: 'string', enum: ['Beginner', 'Intermediate', 'Advanced'] },
+    creator_handle: { type: 'string' },
+    notes: { type: 'string' },
+    exercises: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['exercise_name', 'exercise_type', 'section', 'sets', 'reps', 'rest', 'notes', 'timestamp'],
+        properties: {
+          exercise_name: { type: 'string' },
+          exercise_type: { type: 'string', enum: ['strength', 'cardio', 'core', 'mobility', 'plyometric'] },
+          section: { type: 'string', enum: ['Warmup', 'Main Workout', 'Finisher', 'Cooldown'] },
+          sets: { type: 'string' },
+          reps: { type: 'string' },
+          rest: { type: 'string' },
+          notes: { type: 'string' },
+          timestamp: { type: 'integer' },
+        },
+      },
+    },
+  },
+};
+
+async function mergeWithClaude({ textOut, geminiOut, url, platform }) {
+  const anthropic = new Anthropic({ apiKey: process.env.VITE_ANTHROPIC_API_KEY });
+
+  const response = await anthropic.messages.create({
+    model: 'claude-opus-4-8',
+    max_tokens: 16000,
+    thinking: { type: 'adaptive' },
+    output_config: { format: { type: 'json_schema', schema: MERGE_SCHEMA } },
+    system:
+      'You reconcile two independent extractions of the same workout video into one authoritative workout. ' +
+      'Never invent exercises absent from both sources.',
+    messages: [{
+      role: 'user',
+      content: `Two extractors analyzed the same workout video (${url}).
+
+EXTRACTION A — video-native (Gemini watched the actual video; timestamps come from visual observation, HIGH confidence for timing and exercise order):
+${JSON.stringify(geminiOut)}
+
+EXTRACTION B — text pipeline (built from title, description, chapters, transcript, and user caption; HIGH confidence for exercise names when chapters existed, and for sets/reps stated in text):
+${JSON.stringify(textOut)}
+
+Reconcile them:
+1. Exercise list: include exercises supported by at least one source, but drop entries that look like extraction noise (e.g. an intro/outro segment misread as an exercise).
+2. Timestamps: prefer A's visually-observed timestamps. Use B's only when A lacks the exercise.
+3. Names: prefer the more standard/specific fitness name of the two.
+4. sets/reps/rest: prefer explicitly stated values (B's chapters/caption) over inferred ones.
+5. creator_handle: prefer a personal @handle over a publication/brand name when both appear.
+6. exercise_type: classify every exercise as exactly one of strength, cardio, core, mobility, plyometric.`,
+    }],
+  });
+
+  const jsonBlock = response.content.find(b => b.type === 'text');
+  return JSON.parse(jsonBlock.text);
+}
+
+// Map merged canonical form → app shape, stamping the required data-model
+// fields (creator/source/timestamp) onto every exercise.
+function finalizeWorkout(textOut, merged, url, platform) {
+  const videoId = textOut?.videoId ?? null;
+  return {
+    title: merged.title,
+    tag: merged.tag,
+    duration: merged.duration,
+    level: merged.level,
+    influencer: merged.creator_handle,
+    source: platform,
+    notes: merged.notes,
+    videoId,
+    exerciseList: merged.exercises.map(ex => ({
+      // Existing UI fields
+      name: ex.exercise_name,
+      section: ex.section,
+      sets: ex.sets,
+      reps: ex.reps,
+      rest: ex.rest,
+      weight: '',
+      notes: ex.notes,
+      startSec: ex.timestamp,
+      demoMode: videoId != null ? 'source_video' : 'generic_demo',
+      // Required data-model fields
+      exercise_name: ex.exercise_name,
+      exercise_type: ex.exercise_type,
+      creator_handle: merged.creator_handle,
+      creator_platform: platform,
+      source_url: url ?? '',
+      timestamp: ex.timestamp,
+    })),
+  };
+}
+
+// Single-pipeline fallbacks — no Claude merge call needed
+function mergeFromTextOnly(t) {
+  return {
+    title: t.title, tag: t.tag, duration: t.duration, level: t.level,
+    creator_handle: t.influencer ?? '', notes: t.notes ?? '',
+    exercises: (t.exerciseList ?? []).map(ex => ({
+      exercise_name: ex.name, exercise_type: inferType(ex.name), section: ex.section,
+      sets: ex.sets, reps: ex.reps, rest: ex.rest ?? '', notes: ex.notes ?? '',
+      timestamp: ex.startSec ?? 0,
+    })),
+  };
+}
+
+function mergeFromGeminiOnly(g) {
+  return {
+    title: g.title, tag: 'Full Body', duration: g.duration_min ?? 0, level: g.level ?? 'Intermediate',
+    creator_handle: g.creator_handle ?? '', notes: '',
+    exercises: (g.exercises ?? []).map(ex => ({
+      exercise_name: ex.exercise_name, exercise_type: ex.exercise_type, section: ex.section,
+      sets: ex.sets, reps: ex.reps, rest: '', notes: ex.notes ?? '',
+      timestamp: ex.timestamp ?? 0,
+    })),
+  };
+}
+
+const TYPE_KEYWORDS = {
+  plyometric: ['jump', 'burpee', 'hop', 'bound', 'skater', 'jack'],
+  core: ['plank', 'crunch', 'sit-up', 'situp', 'mountain climber', 'leg raise', 'russian twist', 'bridge'],
+  mobility: ['stretch', 'pose', 'circle', 'walk-out', 'walkout', 'reach', 'rotation', 'cat cow'],
+  cardio: ['high knee', 'sprint', 'run', 'march', 'fast feet', 'step'],
+};
+function inferType(name) {
+  const n = (name || '').toLowerCase();
+  for (const [type, words] of Object.entries(TYPE_KEYWORDS)) {
+    if (words.some(w => n.includes(w))) return type;
+  }
+  return 'strength';
+}
+
+function detectPlatform(url) {
+  if (!url) return 'Other';
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube';
+  if (url.includes('instagram.com')) return 'Instagram';
+  if (url.includes('tiktok.com')) return 'TikTok';
+  return 'Other';
+}
+
+// ── Text pipeline: metadata + chapters + transcript + caption → Claude ───────
+export async function runTextPipeline({ url, caption }) {
     let videoId = null;
     let videoTitle = '';
     let videoDescription = '';
@@ -263,12 +447,74 @@ Return ONLY valid JSON, no markdown:
     }
 
     console.log('Final:', parsed.exerciseList?.map(e => `${e.name}@${e.startSec}s[${e.demoMode}]`).join(', '));
-    res.status(200).json(parsed);
+    return parsed;
+}
 
-  } catch (err) {
-    console.error('Analyze error:', err);
-    res.status(500).json({ error: err.message });
+// ── Gemini pipeline: video-native extraction (YouTube only) ──────────────────
+// Gemini ingests the YouTube video directly and reports what it SEES,
+// including visual timestamps — no chapters or transcript needed.
+export async function runGeminiVideo({ url }) {
+  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set');
+  if (!url || !(url.includes('youtube.com') || url.includes('youtu.be'))) {
+    throw new Error('Gemini video extraction supports YouTube URLs only');
   }
+
+  const prompt = `Watch this workout video and extract every exercise performed.
+
+RULES:
+1. Report only exercises you actually observe being performed or demonstrated.
+2. timestamp: the second in the video when the exercise begins (when the trainer starts it, not when they mention it).
+3. exercise_type must be exactly one of: strength, cardio, core, mobility, plyometric.
+4. sets/reps: read from on-screen text if shown, otherwise infer from what you see. Use "30s" style for timed exercises.
+5. creator_handle: the creator's @handle if shown on screen or in intro, else "".
+6. section: Warmup, Main Workout, Finisher, or Cooldown.
+
+Return ONLY valid JSON:
+{
+  "title": "workout title",
+  "creator_handle": "@handle or empty string",
+  "duration_min": 30,
+  "level": "Beginner|Intermediate|Advanced",
+  "exercises": [
+    {
+      "exercise_name": "Exact Exercise Name",
+      "exercise_type": "strength|cardio|core|mobility|plyometric",
+      "section": "Warmup|Main Workout|Finisher|Cooldown",
+      "sets": "3",
+      "reps": "12",
+      "timestamp": 40,
+      "notes": "form tip or empty string"
+    }
+  ]
+}`;
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { file_data: { file_uri: url } },
+            { text: prompt },
+          ],
+        }],
+        generationConfig: { response_mime_type: 'application/json' },
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`Gemini API ${res.status}: ${errBody.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const parsed = JSON.parse(text);
+  console.log(`Gemini: ${parsed.exercises?.length ?? 0} exercises from video`);
+  return parsed;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
