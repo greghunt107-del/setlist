@@ -372,6 +372,7 @@ export default function App() {
   const [toast, setToast] = useState({show:false,msg:""});
   const [libView, setLibView] = useState("grid");
   const [libFilter, setLibFilter] = useState("All");
+  const [creatorFilter, setCreatorFilter] = useState("All");
   const [builderMode, setBuilderMode] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customExercises, setCustomExercises] = useState([]);
@@ -499,11 +500,13 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
   };
 
   const renderHome=()=>{
+    const creators=[...new Set(workouts.filter(w=>!w.isOwn&&w.influencer).map(w=>w.influencer))].sort();
     const filtered=workouts.filter(w=>
-      w.title?.toLowerCase().includes(search.toLowerCase())||
+      (creatorFilter==="All"||w.influencer===creatorFilter)&&
+      (w.title?.toLowerCase().includes(search.toLowerCase())||
       w.tag?.toLowerCase().includes(search.toLowerCase())||
       w.influencer?.toLowerCase().includes(search.toLowerCase())||
-      w.level?.toLowerCase().includes(search.toLowerCase())
+      w.level?.toLowerCase().includes(search.toLowerCase()))
     );
     return(
       <div className="con">
@@ -518,8 +521,14 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           <input className="tinput" placeholder="Search workouts..." value={search} onChange={e=>setSearch(e.target.value)} style={{paddingLeft:38,borderRadius:13}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"/>
           {search&&<div style={{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",fontSize:18,cursor:"pointer",color:C.muted}} onClick={()=>setSearch("")}>×</div>}
         </div>
+        {creators.length>1&&(
+          <div className="lctrl">
+            <div className={`fchip ${creatorFilter==="All"?"on":""}`} onClick={()=>setCreatorFilter("All")}>All Creators</div>
+            {creators.map(c=><div key={c} className={`fchip ${creatorFilter===c?"on":""}`} onClick={()=>setCreatorFilter(c)}>{c}</div>)}
+          </div>
+        )}
         <div className="sh-row">
-          <span className="sh" style={{margin:0}}>{search?`Results · ${filtered.length}`:"All Workouts"}</span>
+          <span className="sh" style={{margin:0}}>{search||creatorFilter!=="All"?`Results · ${filtered.length}`:"All Workouts"}</span>
           <span className="sa" onClick={()=>setTab("import")}>+ Import</span>
         </div>
         {workouts.length===0?(
