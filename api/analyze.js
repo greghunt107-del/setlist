@@ -183,7 +183,7 @@ Reconcile them:
 2. Timestamps: prefer A's visually-observed timestamps. Use B's only when A lacks the exercise. A timestamp must never exceed the video's duration.
 3. Names: prefer the more standard/specific fitness name of the two.
 4. sets/reps/rest: prefer explicitly stated values (B's chapters/caption) over inferred ones.
-5. creator_handle: prefer a personal @handle over a publication/brand name when both appear.
+5. creator_handle: prefer a personal @handle over a publication/brand name when both appear. If neither source found a handle, use Extraction B's channelTitle (the actual YouTube channel name — ground truth, always trustworthy) rather than leaving this empty.
 6. exercise_type: classify every exercise as exactly one of strength, cardio, core, mobility, plyometric.`,
     }],
   });
@@ -204,12 +204,16 @@ Reconcile them:
 function finalizeWorkout(textOut, merged, url, platform) {
   const videoId = textOut?.videoId ?? extractYouTubeVideoId(url);
   const durationSec = textOut?.videoDurationSec;
+  // Code-level guarantee: channelTitle from YouTube's API is ground truth
+  // and always available when the video exists — never let attribution end
+  // up blank just because the model didn't find a personal @handle.
+  const creatorHandle = merged.creator_handle || textOut?.channelTitle || '';
   return {
     title: merged.title,
     tag: merged.tag,
     duration: merged.duration,
     level: merged.level,
-    influencer: merged.creator_handle,
+    influencer: creatorHandle,
     source: platform,
     notes: merged.notes,
     videoId,
@@ -229,7 +233,7 @@ function finalizeWorkout(textOut, merged, url, platform) {
         // Required data-model fields
         exercise_name: ex.exercise_name,
         exercise_type: ex.exercise_type,
-        creator_handle: merged.creator_handle,
+        creator_handle: creatorHandle,
         creator_platform: platform,
         source_url: url ?? '',
         timestamp,
@@ -344,10 +348,11 @@ export async function runTextPipeline({ url, caption }, metrics) {
     }
 
     // ── YouTube: fetch all metadata ─────────────────────────────────────────
+    let channelTitle = '';
     if (platform === 'YouTube') {
       videoId = extractYouTubeVideoId(url);
 
-      // YouTube Data API: title, description, duration
+      // YouTube Data API: title, description, duration, channel name
       if (videoId && process.env.YOUTUBE_API_KEY) {
         try {
           const ytRes = await fetch(
@@ -357,6 +362,10 @@ export async function runTextPipeline({ url, caption }, metrics) {
           if (ytData.items?.[0]) {
             videoTitle = stripLoneSurrogates(ytData.items[0].snippet.title || '');
             videoDescription = stripLoneSurrogates(ytData.items[0].snippet.description || '');
+            // Ground truth creator identity — always present, unlike a
+            // personal @handle which the model has to guess or read off
+            // screen. This is what actually identifies who posted the video.
+            channelTitle = stripLoneSurrogates(ytData.items[0].snippet.channelTitle || '');
 
             // Parse ISO 8601 duration -> seconds
             const dur = ytData.items[0].contentDetails?.duration || '';
@@ -450,6 +459,7 @@ export async function runTextPipeline({ url, caption }, metrics) {
 
     const sourceBlock = `
 PLATFORM: ${platform}
+${channelTitle ? `CHANNEL / CREATOR: ${channelTitle}` : ''}
 ${videoTitle ? `VIDEO TITLE: ${videoTitle}` : ''}
 ${videoDurationSec ? `VIDEO DURATION: ${Math.round(videoDurationSec / 60)} minutes (${videoDurationSec} seconds)` : ''}
 ${videoDescription ? `VIDEO DESCRIPTION:\n${videoDescription.slice(0, 2000)}` : ''}
@@ -472,7 +482,8 @@ EXTRACTION RULES:
 6. sets/reps: extract from context. Use "30s" for timed, numbers for reps. Default "3" sets if unclear.
 7. exercise_type: classify every exercise as exactly one of strength, cardio, core, mobility, plyometric — based on what the exercise actually is (e.g. a held stretch or yoga pose is mobility, never strength by default).
 8. startSec: the second in the video when this exercise begins. Be precise — use transcript timestamps when available. If genuinely unknown, use 0 — a later step estimates a better position.
-9. section: Warmup (first ~10%), Main Workout (middle), Finisher (last intense burst), Cooldown (final stretches).`;
+9. section: Warmup (first ~10%), Main Workout (middle), Finisher (last intense burst), Cooldown (final stretches).
+10. influencer: prefer a personal @handle if one is stated in the title/description. Otherwise use the CHANNEL / CREATOR name above verbatim — never leave this empty when a channel name is provided.`;
 
     // ── Call Claude ─────────────────────────────────────────────────────────
     const textModel = 'claude-sonnet-5';
@@ -499,6 +510,11 @@ EXTRACTION RULES:
     parsed.source = platform;
     if (videoId) parsed.videoId = videoId;
     parsed.videoDurationSec = videoDurationSec || null;
+    // Code-level guarantee, not just a prompt instruction — channelTitle is
+    // always available from the YouTube API when the video exists, so never
+    // let creator attribution end up empty if the model missed the rule.
+    parsed.channelTitle = channelTitle || null;
+    parsed.influencer = parsed.influencer || channelTitle || '';
 
     // ── Post-process: lock in best timestamps ───────────────────────────────
     if (parsed.exerciseList?.length > 0) {
