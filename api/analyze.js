@@ -17,27 +17,76 @@ export default async function handler(req, res) {
   }
 }
 
+// $/MTok, standard tier (ai.google.dev/gemini-api/docs/pricing, verified 2026-07-20).
+// claude-sonnet-5 has a temporary intro rate ($2/$10) through 2026-08-31 —
+// using the standard rate here so this stays accurate after that date.
+const PRICING = {
+  'claude-opus-4-8': { in: 5, out: 25 },
+  'claude-sonnet-5': { in: 3, out: 15 },
+  'gemini-3.5-flash': { in: 1.5, out: 9 },
+};
+const usdCost = (model, inTok, outTok) => {
+  const p = PRICING[model];
+  if (!p || inTok == null || outTok == null) return null;
+  return (inTok / 1e6) * p.in + (outTok / 1e6) * p.out;
+};
+
 // ── Hybrid extraction: both pipelines in parallel → Claude merge ─────────────
 export async function runHybridExtraction({ url, caption }) {
+  const metrics = { url, pipelines: {} };
+  const overallStart = Date.now();
+
   const [textRes, geminiRes] = await Promise.allSettled([
-    runTextPipeline({ url, caption }),
-    runGeminiVideo({ url }),
+    runTextPipeline({ url, caption }, metrics),
+    runGeminiVideo({ url }, metrics),
   ]);
 
   const textOut = textRes.status === 'fulfilled' ? textRes.value : null;
   const geminiOut = geminiRes.status === 'fulfilled' ? geminiRes.value : null;
-  if (textRes.status === 'rejected') console.log('Text pipeline failed:', textRes.reason?.message);
-  if (geminiRes.status === 'rejected') console.log('Gemini pipeline failed:', geminiRes.reason?.message);
+  if (textRes.status === 'rejected') {
+    metrics.pipelines.text = { ...metrics.pipelines.text, error: textRes.reason?.message };
+    console.log('Text pipeline failed:', textRes.reason?.message);
+  }
+  if (geminiRes.status === 'rejected') {
+    metrics.pipelines.gemini = { ...metrics.pipelines.gemini, error: geminiRes.reason?.message };
+    console.log('Gemini pipeline failed:', geminiRes.reason?.message);
+  }
 
-  if (!textOut && !geminiOut) throw new Error('Both extraction pipelines failed');
+  if (!textOut && !geminiOut) {
+    metrics.totalMs = Date.now() - overallStart;
+    console.log('EXTRACTION_METRICS', JSON.stringify(metrics));
+    throw new Error('Both extraction pipelines failed');
+  }
 
   const platform = detectPlatform(url);
+  let result;
   // Only one pipeline survived — skip the merge, map directly
-  if (!geminiOut) return finalizeWorkout(textOut, mergeFromTextOnly(textOut), url, platform);
-  if (!textOut) return finalizeWorkout(null, mergeFromGeminiOnly(geminiOut), url, platform);
+  if (!geminiOut) result = finalizeWorkout(textOut, mergeFromTextOnly(textOut), url, platform);
+  else if (!textOut) result = finalizeWorkout(null, mergeFromGeminiOnly(geminiOut), url, platform);
+  else {
+    const merged = await mergeWithClaude({ textOut, geminiOut, url, platform }, metrics);
+    // Code-level guarantee, not just a prompt instruction: if the merge
+    // dropped most of the exercises either source found, don't trust it —
+    // fall back to whichever single source had more. Verified in testing
+    // that the merge prompt alone doesn't reliably prevent this.
+    const sourceMax = Math.max(geminiOut.exercises?.length ?? 0, textOut.exerciseList?.length ?? 0);
+    if (sourceMax > 0 && merged.exercises.length < sourceMax * 0.6) {
+      console.log(`Merge kept only ${merged.exercises.length}/${sourceMax} exercises — discarding merge, using richer single source`);
+      metrics.mergeDiscarded = { mergedCount: merged.exercises.length, sourceMax };
+      const richerSource = (geminiOut.exercises?.length ?? 0) >= (textOut.exerciseList?.length ?? 0)
+        ? mergeFromGeminiOnly(geminiOut)
+        : mergeFromTextOnly(textOut);
+      result = finalizeWorkout(textOut, richerSource, url, platform);
+    } else {
+      result = finalizeWorkout(textOut, merged, url, platform);
+    }
+  }
 
-  const merged = await mergeWithClaude({ textOut, geminiOut, url, platform });
-  return finalizeWorkout(textOut, merged, url, platform);
+  metrics.totalMs = Date.now() - overallStart;
+  metrics.exerciseCount = result.exerciseList?.length ?? 0;
+  metrics.totalKnownCostUsd = Object.values(metrics.pipelines).reduce((sum, p) => sum + (p.costUsd || 0), 0);
+  console.log('EXTRACTION_METRICS', JSON.stringify(metrics));
+  return result;
 }
 
 const MERGE_SCHEMA = {
@@ -72,11 +121,45 @@ const MERGE_SCHEMA = {
   },
 };
 
-async function mergeWithClaude({ textOut, geminiOut, url, platform }) {
+const TEXT_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['title', 'tag', 'duration', 'level', 'influencer', 'notes', 'exerciseList'],
+  properties: {
+    title: { type: 'string' },
+    tag: { type: 'string', enum: ['HIIT', 'Strength', 'Cardio', 'Yoga', 'Core', 'Full Body', 'Mobility'] },
+    duration: { type: 'integer' },
+    level: { type: 'string', enum: ['Beginner', 'Intermediate', 'Advanced'] },
+    influencer: { type: 'string' },
+    notes: { type: 'string' },
+    exerciseList: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['name', 'exercise_type', 'section', 'sets', 'reps', 'rest', 'notes', 'startSec'],
+        properties: {
+          name: { type: 'string' },
+          exercise_type: { type: 'string', enum: ['strength', 'cardio', 'core', 'mobility', 'plyometric'] },
+          section: { type: 'string', enum: ['Warmup', 'Main Workout', 'Finisher', 'Cooldown'] },
+          sets: { type: 'string' },
+          reps: { type: 'string' },
+          rest: { type: 'string' },
+          notes: { type: 'string' },
+          startSec: { type: 'integer' },
+        },
+      },
+    },
+  },
+};
+
+async function mergeWithClaude({ textOut, geminiOut, url, platform }, metrics) {
+  const start = Date.now();
   const anthropic = new Anthropic({ apiKey: process.env.VITE_ANTHROPIC_API_KEY });
+  const model = 'claude-opus-4-8';
 
   const response = await anthropic.messages.create({
-    model: 'claude-opus-4-8',
+    model,
     max_tokens: 16000,
     thinking: { type: 'adaptive' },
     output_config: { format: { type: 'json_schema', schema: MERGE_SCHEMA } },
@@ -92,10 +175,11 @@ ${JSON.stringify(geminiOut)}
 
 EXTRACTION B — text pipeline (built from title, description, chapters, transcript, and user caption; HIGH confidence for exercise names when chapters existed, and for sets/reps stated in text):
 ${JSON.stringify(textOut)}
+${textOut.videoDurationSec ? `\nVIDEO DURATION: ${textOut.videoDurationSec} seconds. No timestamp may exceed this.` : ''}
 
 Reconcile them:
-1. Exercise list: include exercises supported by at least one source, but drop entries that look like extraction noise (e.g. an intro/outro segment misread as an exercise).
-2. Timestamps: prefer A's visually-observed timestamps. Use B's only when A lacks the exercise.
+1. Exercise list: include EVERY exercise that appears in EITHER source. Merging means deduplicating — two entries describing the same movement at close timestamps collapse into one — it does NOT mean summarizing or shortening. Extraction A has ${geminiOut.exercises?.length ?? 0} exercises and Extraction B has ${textOut.exerciseList?.length ?? 0}. Your merged list must contain close to max(A, B) entries — only drop an entry if it is a near-duplicate of another entry you're keeping, or is clearly not a real exercise (e.g. an intro/outro segment misread as one). Do NOT stop early or truncate the list for length.
+2. Timestamps: prefer A's visually-observed timestamps. Use B's only when A lacks the exercise. A timestamp must never exceed the video's duration.
 3. Names: prefer the more standard/specific fitness name of the two.
 4. sets/reps/rest: prefer explicitly stated values (B's chapters/caption) over inferred ones.
 5. creator_handle: prefer a personal @handle over a publication/brand name when both appear.
@@ -103,14 +187,22 @@ Reconcile them:
     }],
   });
 
+  if (metrics) {
+    const inTok = response.usage?.input_tokens, outTok = response.usage?.output_tokens;
+    metrics.pipelines.merge = { ms: Date.now() - start, model, inTok, outTok, costUsd: usdCost(model, inTok, outTok) };
+  }
+
   const jsonBlock = response.content.find(b => b.type === 'text');
   return JSON.parse(jsonBlock.text);
 }
 
 // Map merged canonical form → app shape, stamping the required data-model
-// fields (creator/source/timestamp) onto every exercise.
+// fields (creator/source/timestamp) onto every exercise. Timestamps are
+// clamped to the known video duration — the merge model is instructed not
+// to exceed it, but a hard server-side clamp catches it when it does anyway.
 function finalizeWorkout(textOut, merged, url, platform) {
   const videoId = textOut?.videoId ?? extractYouTubeVideoId(url);
+  const durationSec = textOut?.videoDurationSec;
   return {
     title: merged.title,
     tag: merged.tag,
@@ -120,25 +212,28 @@ function finalizeWorkout(textOut, merged, url, platform) {
     source: platform,
     notes: merged.notes,
     videoId,
-    exerciseList: merged.exercises.map(ex => ({
-      // Existing UI fields
-      name: ex.exercise_name,
-      section: ex.section,
-      sets: ex.sets,
-      reps: ex.reps,
-      rest: ex.rest,
-      weight: '',
-      notes: ex.notes,
-      startSec: ex.timestamp,
-      demoMode: videoId != null ? 'source_video' : 'generic_demo',
-      // Required data-model fields
-      exercise_name: ex.exercise_name,
-      exercise_type: ex.exercise_type,
-      creator_handle: merged.creator_handle,
-      creator_platform: platform,
-      source_url: url ?? '',
-      timestamp: ex.timestamp,
-    })),
+    exerciseList: merged.exercises.map(ex => {
+      const timestamp = (durationSec && ex.timestamp > durationSec) ? Math.max(0, durationSec - 5) : ex.timestamp;
+      return {
+        // Existing UI fields
+        name: ex.exercise_name,
+        section: ex.section,
+        sets: ex.sets,
+        reps: ex.reps,
+        rest: ex.rest,
+        weight: '',
+        notes: ex.notes,
+        startSec: timestamp,
+        demoMode: videoId != null ? 'source_video' : 'generic_demo',
+        // Required data-model fields
+        exercise_name: ex.exercise_name,
+        exercise_type: ex.exercise_type,
+        creator_handle: merged.creator_handle,
+        creator_platform: platform,
+        source_url: url ?? '',
+        timestamp,
+      };
+    }),
   };
 }
 
@@ -148,7 +243,10 @@ function mergeFromTextOnly(t) {
     title: t.title, tag: t.tag, duration: t.duration, level: t.level,
     creator_handle: t.influencer ?? '', notes: t.notes ?? '',
     exercises: (t.exerciseList ?? []).map(ex => ({
-      exercise_name: ex.name, exercise_type: inferType(ex.name), section: ex.section,
+      // exercise_type comes from the extraction model's own classification
+      // (structured-output schema-enforced) — inferType() is a last-resort
+      // safety net only, in case an older cached shape lacks the field.
+      exercise_name: ex.name, exercise_type: ex.exercise_type || inferType(ex.name), section: ex.section,
       sets: ex.sets, reps: ex.reps, rest: ex.rest ?? '', notes: ex.notes ?? '',
       timestamp: ex.startSec ?? 0,
     })),
@@ -181,6 +279,28 @@ function inferType(name) {
   return 'strength';
 }
 
+// Gemini's JSON mode occasionally appends a stray trailing fragment after a
+// complete, valid JSON object (e.g. a duplicated closing tail). Extract just
+// the balanced top-level object instead of parsing the whole string.
+function extractFirstJsonObject(text) {
+  const start = text.indexOf('{');
+  if (start === -1) throw new Error('No JSON object found in response');
+  let depth = 0, inString = false, escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (c === '"') inString = false;
+      continue;
+    }
+    if (c === '"') inString = true;
+    else if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) return text.slice(start, i + 1); }
+  }
+  throw new Error('Unbalanced JSON object in response');
+}
+
 function detectPlatform(url) {
   if (!url) return 'Other';
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube';
@@ -202,7 +322,9 @@ function extractYouTubeVideoId(url) {
 }
 
 // ── Text pipeline: metadata + chapters + transcript + caption → Claude ───────
-export async function runTextPipeline({ url, caption }) {
+export async function runTextPipeline({ url, caption }, metrics) {
+    const pipelineStart = Date.now();
+    caption = stripLoneSurrogates(caption || '');
     let videoId = null;
     let videoTitle = '';
     let videoDescription = '';
@@ -237,8 +359,8 @@ export async function runTextPipeline({ url, caption }) {
           );
           const ytData = await ytRes.json();
           if (ytData.items?.[0]) {
-            videoTitle = ytData.items[0].snippet.title || '';
-            videoDescription = ytData.items[0].snippet.description || '';
+            videoTitle = stripLoneSurrogates(ytData.items[0].snippet.title || '');
+            videoDescription = stripLoneSurrogates(ytData.items[0].snippet.description || '');
 
             // Parse ISO 8601 duration -> seconds
             const dur = ytData.items[0].contentDetails?.duration || '';
@@ -295,7 +417,7 @@ export async function runTextPipeline({ url, caption }) {
               timedTranscript = captionData.events
                 .filter(e => e.segs && e.tStartMs !== undefined)
                 .map(e => ({
-                  text: e.segs.map(s => s.utf8).join('').replace(/\n/g, ' ').trim(),
+                  text: stripLoneSurrogates(e.segs.map(s => s.utf8).join('').replace(/\n/g, ' ').trim()),
                   startSec: Math.round(e.tStartMs / 1000)
                 }))
                 .filter(e => e.text.length > 0);
@@ -352,57 +474,35 @@ EXTRACTION RULES:
 4. TITLE/DESCRIPTION = last resort fallback only.
 5. NEVER invent exercises not supported by the source.
 6. sets/reps: extract from context. Use "30s" for timed, numbers for reps. Default "3" sets if unclear.
-7. weight: always empty string "".
-8. demoMode: "source_video" if you have a confident startSec, otherwise "generic_demo".
-9. startSec: the second in the video when this exercise begins. Be precise — use transcript timestamps when available.
-10. section: Warmup (first ~10%), Main Workout (middle), Finisher (last intense burst), Cooldown (final stretches).
-
-Return ONLY valid JSON, no markdown:
-{
-  "title": "workout title",
-  "tag": "HIIT|Strength|Cardio|Yoga|Core|Full Body|Mobility",
-  "duration": 30,
-  "level": "Beginner|Intermediate|Advanced",
-  "influencer": "@handle or empty string",
-  "source": "${platform}",
-  "notes": "one sentence about workout structure",
-  "videoId": ${videoId ? `"${videoId}"` : 'null'},
-  "exerciseList": [
-    {
-      "name": "Exact Exercise Name",
-      "section": "Warmup|Main Workout|Finisher|Cooldown",
-      "sets": "3",
-      "reps": "12",
-      "rest": "30s",
-      "weight": "",
-      "notes": "form tip or empty string",
-      "demoMode": "source_video",
-      "startSec": 40
-    }
-  ]
-}`;
+7. exercise_type: classify every exercise as exactly one of strength, cardio, core, mobility, plyometric — based on what the exercise actually is (e.g. a held stretch or yoga pose is mobility, never strength by default).
+8. startSec: the second in the video when this exercise begins. Be precise — use transcript timestamps when available. If genuinely unknown, use 0 — a later step estimates a better position.
+9. section: Warmup (first ~10%), Main Workout (middle), Finisher (last intense burst), Cooldown (final stretches).`;
 
     // ── Call Claude ─────────────────────────────────────────────────────────
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.VITE_ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 4000,
-        system: 'You are a fitness workout extraction specialist. Always respond with valid JSON only. No markdown. No explanation. Preserve exact exercise names. Use transcript timestamps precisely.',
-        messages: [{ role: 'user', content: prompt }]
-      })
+    const textModel = 'claude-sonnet-5';
+    const anthropic = new Anthropic({ apiKey: process.env.VITE_ANTHROPIC_API_KEY });
+    const response = await anthropic.messages.create({
+      model: textModel,
+      max_tokens: 8000,
+      thinking: { type: 'adaptive' },
+      output_config: { format: { type: 'json_schema', schema: TEXT_SCHEMA } },
+      system: 'You are a fitness workout extraction specialist. Preserve exact exercise names. Use transcript timestamps precisely.',
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    const aiData = await response.json();
-    const aiText = aiData.content?.[0]?.text || '';
-    const clean = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(clean);
+    if (metrics) {
+      const inTok = response.usage?.input_tokens, outTok = response.usage?.output_tokens;
+      metrics.pipelines.text = {
+        ms: Date.now() - pipelineStart, model: textModel, inTok, outTok,
+        costUsd: usdCost(textModel, inTok, outTok), hasChapters, hasTranscript, hasCaption,
+        stopReason: response.stop_reason,
+      };
+    }
+    const aiText = response.content.find(b => b.type === 'text')?.text || '';
+    const parsed = JSON.parse(extractFirstJsonObject(aiText));
+    parsed.source = platform;
     if (videoId) parsed.videoId = videoId;
+    parsed.videoDurationSec = videoDurationSec || null;
 
     // ── Post-process: lock in best timestamps ───────────────────────────────
     if (parsed.exerciseList?.length > 0) {
@@ -441,13 +541,13 @@ Return ONLY valid JSON, no markdown:
   parsed.exerciseList = interpolateGaps(parsed.exerciseList, videoDurationSec);
 
       } else if (videoDurationSec > 0) {
-// TIER 3: No chapters, no transcript — play from beginning
-          // Better to show full video than jump to wrong timestamp
-          parsed.exerciseList = parsed.exerciseList.map(ex => ({
-            ...ex,
-            startSec: 0,
-            demoMode: 'source_video'
-          }));
+// TIER 3: No chapters, no transcript — spread proportionally across the
+// video's known duration instead of collapsing every exercise to 0:00.
+// An estimated position (even a rough one) beats sending every exercise
+// to the same instant, and this only ever runs when Gemini has ALSO
+// failed to provide real visual timestamps for this pipeline's result.
+          parsed.exerciseList = parsed.exerciseList.map(ex => ({ ...ex, startSec: undefined }));
+          parsed.exerciseList = interpolateGaps(parsed.exerciseList, videoDurationSec);
 
       } else {
         // TIER 4: Nothing — trust AI or fall back to generic
@@ -465,7 +565,8 @@ Return ONLY valid JSON, no markdown:
 // ── Gemini pipeline: video-native extraction (YouTube only) ──────────────────
 // Gemini ingests the YouTube video directly and reports what it SEES,
 // including visual timestamps — no chapters or transcript needed.
-export async function runGeminiVideo({ url }) {
+export async function runGeminiVideo({ url }, metrics) {
+  const start = Date.now();
   if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set');
   if (!url || !(url.includes('youtube.com') || url.includes('youtu.be'))) {
     throw new Error('Gemini video extraction supports YouTube URLs only');
@@ -475,11 +576,12 @@ export async function runGeminiVideo({ url }) {
 
 RULES:
 1. Report only exercises you actually observe being performed or demonstrated.
-2. timestamp: the second in the video when the exercise begins (when the trainer starts it, not when they mention it).
+2. timestamp: a SINGLE INTEGER — the second in the video when the exercise begins (when the trainer starts it, not when they mention it). Never an array or a "mm:ss" string.
 3. exercise_type must be exactly one of: strength, cardio, core, mobility, plyometric.
 4. sets/reps: read from on-screen text if shown, otherwise infer from what you see. Use "30s" style for timed exercises.
 5. creator_handle: the creator's @handle if shown on screen or in intro, else "".
 6. section: Warmup, Main Workout, Finisher, or Cooldown.
+7. If the same exercise repeats across multiple rounds, report it once per round with that round's own timestamp — do not group repeats into one entry.
 
 Return ONLY valid JSON:
 {
@@ -500,36 +602,65 @@ Return ONLY valid JSON:
   ]
 }`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { file_data: { file_uri: url } },
-            { text: prompt },
-          ],
-        }],
-        generationConfig: { response_mime_type: 'application/json' },
-      }),
-    }
-  );
+  // Transient overload/rate-limit errors are common on video-analysis calls —
+  // retry once after a short backoff before giving up and degrading to the
+  // text-only fallback path.
+  const RETRYABLE_STATUS = new Set([429, 500, 503]);
+  let data;
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { file_data: { file_uri: url } },
+              { text: prompt },
+            ],
+          }],
+          generationConfig: { response_mime_type: 'application/json' },
+        }),
+      }
+    );
 
-  if (!res.ok) {
+    if (res.ok) { data = await res.json(); break; }
+
     const errBody = await res.text();
+    if (RETRYABLE_STATUS.has(res.status) && attempt === 0) {
+      console.log(`Gemini API ${res.status} (transient) — retrying once after backoff`);
+      await new Promise(r => setTimeout(r, 4000));
+      continue;
+    }
     throw new Error(`Gemini API ${res.status}: ${errBody.slice(0, 300)}`);
   }
-
-  const data = await res.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  const parsed = JSON.parse(text);
+  const parsed = JSON.parse(extractFirstJsonObject(text));
   console.log(`Gemini: ${parsed.exercises?.length ?? 0} exercises from video`);
+  if (metrics) {
+    const model = 'gemini-3.5-flash';
+    // Gemini bills thinking tokens as output; candidatesTokenCount alone undercounts.
+    const inTok = data.usageMetadata?.promptTokenCount;
+    const outTok = (data.usageMetadata?.candidatesTokenCount || 0) + (data.usageMetadata?.thoughtsTokenCount || 0);
+    metrics.pipelines.gemini = { ms: Date.now() - start, model, inTok, outTok, costUsd: usdCost(model, inTok, outTok) };
+  }
   return parsed;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+// External text (YouTube titles/descriptions/captions, occasionally user
+// input) can contain unpaired UTF-16 surrogates — e.g. from a corrupted
+// emoji — which JSON.stringify happily serializes but the Anthropic API
+// rejects outright with a 400 ("no low surrogate in string"). Strip any
+// surrogate half that isn't part of a valid pair before it reaches a prompt.
+function stripLoneSurrogates(str) {
+  if (!str) return str;
+  return str
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, '')
+    .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
+}
 
 function normalize(str) {
   return str.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
