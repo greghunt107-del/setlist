@@ -11,7 +11,6 @@ const C = {
 };
 
 const STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;overflow-x:hidden}
 body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
