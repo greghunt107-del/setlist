@@ -316,6 +316,7 @@ function extractYouTubeVideoId(url) {
   if (!url) return null;
   try {
     if (url.includes('youtube.com/watch')) return new URL(url).searchParams.get('v');
+    if (url.includes('youtube.com/shorts/')) return url.split('youtube.com/shorts/')[1]?.split(/[/?]/)[0] || null;
     if (url.includes('youtu.be/')) return url.split('youtu.be/')[1]?.split('?')[0] || null;
   } catch {}
   return null;
@@ -343,13 +344,7 @@ export async function runTextPipeline({ url, caption }, metrics) {
 
     // ── YouTube: fetch all metadata ─────────────────────────────────────────
     if (platform === 'YouTube') {
-      try {
-        if (url.includes('youtube.com/watch')) {
-          videoId = new URL(url).searchParams.get('v');
-        } else if (url.includes('youtu.be/')) {
-          videoId = url.split('youtu.be/')[1]?.split('?')[0];
-        }
-      } catch {}
+      videoId = extractYouTubeVideoId(url);
 
       // YouTube Data API: title, description, duration
       if (videoId && process.env.YOUTUBE_API_KEY) {
