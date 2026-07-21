@@ -420,6 +420,7 @@ export default function App() {
     setLoading(true);
     try{
       const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:importUrl,caption:importCaption})});
+      if(res.status===429){setLoading(false);showToast("Too many requests — try again in a bit");return;}
       const data=await res.json();
       let parsed;
       if(data.exerciseList){

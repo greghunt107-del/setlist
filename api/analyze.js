@@ -1,11 +1,52 @@
 import Anthropic from '@anthropic-ai/sdk';
 
+// ── Per-IP rate limiting ─────────────────────────────────────────────────────
+// In-memory store: good enough for v1 casual sharing, with two known limits —
+// (1) Vercel recycles function instances, so counts reset unpredictably and
+// the Map leaks entries until recycling (harmless at this scale), and
+// (2) concurrent instances each keep their own counts, so the real ceiling is
+// N instances x limit. The durable upgrade path once we're past casual
+// sharing into Phase 3 beta traffic is Vercel KV or Upstash Redis.
+const RATE_LIMIT = 10;            // requests per window per IP
+const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const rateStore = new Map();      // ip -> [timestamps]
+
+export function checkRateLimit(ip) {
+  const now = Date.now();
+  const hits = (rateStore.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS);
+  if (hits.length >= RATE_LIMIT) {
+    rateStore.set(ip, hits);
+    const retryAfterSec = Math.ceil((hits[0] + RATE_WINDOW_MS - now) / 1000);
+    return { allowed: false, retryAfterSec };
+  }
+  hits.push(now);
+  rateStore.set(ip, hits);
+  return { allowed: true };
+}
+
+function getClientIp(req) {
+  // Vercel sets x-forwarded-for; first entry is the client.
+  const fwd = req.headers['x-forwarded-for'];
+  if (typeof fwd === 'string' && fwd.length) return fwd.split(',')[0].trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
+
+  const ip = getClientIp(req);
+  const limit = checkRateLimit(ip);
+  if (!limit.allowed) {
+    res.setHeader('Retry-After', String(limit.retryAfterSec));
+    return res.status(429).json({
+      error: 'Rate limit exceeded: max ' + RATE_LIMIT + ' extractions per hour. Try again later.',
+      retryAfterSec: limit.retryAfterSec,
+    });
+  }
 
   try {
     const { url, caption } = req.body;
