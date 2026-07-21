@@ -53,8 +53,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { url, caption } = req.body;
-    const parsed = await runHybridExtraction({ url, caption });
+    const { url, caption, blobUrl, creatorHandle } = req.body;
+    const parsed = blobUrl
+      ? await runUploadedVideoExtraction({ blobUrl, caption, creatorHandle })
+      : await runHybridExtraction({ url, caption });
     res.status(200).json(parsed);
   } catch (err) {
     console.error('Analyze error:', err);
@@ -648,17 +650,9 @@ EXTRACTION RULES:
     return parsed;
 }
 
-// ── Gemini pipeline: video-native extraction (YouTube only) ──────────────────
-// Gemini ingests the YouTube video directly and reports what it SEES,
-// including visual timestamps — no chapters or transcript needed.
-export async function runGeminiVideo({ url }, metrics) {
-  const start = Date.now();
-  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set');
-  if (!url || !(url.includes('youtube.com') || url.includes('youtu.be'))) {
-    throw new Error('Gemini video extraction supports YouTube URLs only');
-  }
-
-  const prompt = `Watch this workout video and extract every exercise performed.
+// Shared by both the YouTube (file_uri = public URL) and uploaded-file
+// (file_uri = Gemini Files API reference) video-analysis paths.
+const EXERCISE_EXTRACTION_PROMPT = `Watch this workout video and extract every exercise performed.
 
 RULES:
 1. Report only exercises you actually observe being performed or demonstrated.
@@ -688,12 +682,14 @@ Return ONLY valid JSON:
   ]
 }`;
 
-  // Transient overload/rate-limit errors are common on video-analysis calls.
-  // Primary model gets one retry after backoff; if it's still down, fall back
-  // to a second model entirely rather than degrading straight to the much
-  // weaker text-only path — verified in testing that when the primary model
-  // is genuinely unavailable, a fallback model still analyzing the actual
-  // video beats losing per-exercise granularity altogether.
+// Transient overload/rate-limit errors are common on video-analysis calls.
+// Primary model gets one retry after backoff; if it's still down, fall back
+// to a second model entirely rather than degrading straight to the much
+// weaker text-only path — verified in testing that when the primary model
+// is genuinely unavailable, a fallback model still analyzing the actual
+// video beats losing per-exercise granularity altogether.
+async function callGeminiWithFileData(fileData, prompt, metrics) {
+  const start = Date.now();
   const MODEL_CHAIN = ['gemini-3.5-flash', 'gemini-3.1-flash-lite'];
   const RETRYABLE_STATUS = new Set([429, 500, 503]);
   let data, usedModel;
@@ -707,7 +703,7 @@ Return ONLY valid JSON:
           body: JSON.stringify({
             contents: [{
               parts: [
-                { file_data: { file_uri: url } },
+                { file_data: fileData },
                 { text: prompt },
               ],
             }],
@@ -733,7 +729,6 @@ Return ONLY valid JSON:
   }
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   const parsed = JSON.parse(extractFirstJsonObject(text));
-  console.log(`Gemini (${usedModel}): ${parsed.exercises?.length ?? 0} exercises from video`);
   if (metrics) {
     // Gemini bills thinking tokens as output; candidatesTokenCount alone undercounts.
     const inTok = data.usageMetadata?.promptTokenCount;
@@ -741,6 +736,122 @@ Return ONLY valid JSON:
     metrics.pipelines.gemini = { ms: Date.now() - start, model: usedModel, inTok, outTok, costUsd: usdCost(usedModel, inTok, outTok) };
   }
   return parsed;
+}
+
+// ── Gemini pipeline: video-native extraction (YouTube only) ──────────────────
+// Gemini ingests the YouTube video directly and reports what it SEES,
+// including visual timestamps — no chapters or transcript needed.
+export async function runGeminiVideo({ url }, metrics) {
+  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set');
+  if (!url || !(url.includes('youtube.com') || url.includes('youtu.be'))) {
+    throw new Error('Gemini video extraction supports YouTube URLs only');
+  }
+  const parsed = await callGeminiWithFileData({ file_uri: url }, EXERCISE_EXTRACTION_PROMPT, metrics);
+  console.log(`Gemini: ${parsed.exercises?.length ?? 0} exercises from video`);
+  return parsed;
+}
+
+// ── Gemini pipeline: uploaded video file (Track A accuracy backstop) ─────────
+// For Instagram/TikTok/YouTube Shorts saved locally and uploaded, or any
+// video Gemini can't reach via a public URL. Unlike runGeminiVideo, this
+// requires routing the actual bytes through Gemini's own Files API first —
+// Gemini does not fetch arbitrary third-party URLs (confirmed against
+// ai.google.dev/api/files: file_data.file_uri only accepts YouTube links or
+// a files.googleapis.com reference from this upload flow).
+async function uploadToGeminiFiles({ blobUrl }, metrics) {
+  const start = Date.now();
+
+  // Blob store is private -- BLOB_READ_WRITE_TOKEN also grants read access.
+  const blobRes = await fetch(blobUrl, {
+    headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
+  });
+  if (!blobRes.ok) throw new Error(`Failed to fetch uploaded video from storage: ${blobRes.status}`);
+  const contentType = blobRes.headers.get('content-type') || 'video/mp4';
+  const bytes = Buffer.from(await blobRes.arrayBuffer());
+
+  // Step 1: start the resumable upload session (Gemini's documented 3-step
+  // protocol -- start, upload+finalize, poll for ACTIVE).
+  const startRes = await fetch(
+    `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: {
+        'X-Goog-Upload-Protocol': 'resumable',
+        'X-Goog-Upload-Command': 'start',
+        'X-Goog-Upload-Header-Content-Length': String(bytes.length),
+        'X-Goog-Upload-Header-Content-Type': contentType,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ file: { display_name: 'workout-upload' } }),
+    }
+  );
+  if (!startRes.ok) throw new Error(`Gemini Files API start failed: ${startRes.status} ${await startRes.text()}`);
+  const uploadUrl = startRes.headers.get('x-goog-upload-url');
+  if (!uploadUrl) throw new Error('Gemini Files API did not return an upload URL');
+
+  // Step 2: upload the bytes and finalize in one call.
+  const uploadRes = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Length': String(bytes.length),
+      'X-Goog-Upload-Offset': '0',
+      'X-Goog-Upload-Command': 'upload, finalize',
+    },
+    body: bytes,
+  });
+  if (!uploadRes.ok) throw new Error(`Gemini Files API upload failed: ${uploadRes.status} ${await uploadRes.text()}`);
+  const uploadData = await uploadRes.json();
+  const fileUri = uploadData.file?.uri;
+  const fileName = uploadData.file?.name;
+  if (!fileUri || !fileName) throw new Error('Gemini Files API did not return a file URI');
+
+  // Step 3: videos need processing time -- poll until ACTIVE before use.
+  let state = uploadData.file?.state;
+  const pollStart = Date.now();
+  const POLL_TIMEOUT_MS = 120000; // safety net against a stalled Gemini-side job
+  while (state !== 'ACTIVE') {
+    if (state === 'FAILED') throw new Error('Gemini failed to process the uploaded video');
+    if (Date.now() - pollStart > POLL_TIMEOUT_MS) throw new Error('Gemini video processing timed out');
+    await new Promise(r => setTimeout(r, 3000));
+    const checkRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${process.env.GEMINI_API_KEY}`);
+    if (!checkRes.ok) throw new Error(`Gemini Files API status check failed: ${checkRes.status}`);
+    state = (await checkRes.json()).state;
+  }
+
+  if (metrics) metrics.pipelines.geminiUpload = { ms: Date.now() - start, bytesUploaded: bytes.length };
+  return { fileUri, mimeType: contentType };
+}
+
+async function runGeminiUploadedVideo({ blobUrl, creatorHandle }, metrics) {
+  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not set');
+  if (!blobUrl) throw new Error('No uploaded video URL provided');
+  const { fileUri, mimeType } = await uploadToGeminiFiles({ blobUrl }, metrics);
+  const parsed = await callGeminiWithFileData({ mime_type: mimeType, file_uri: fileUri }, EXERCISE_EXTRACTION_PROMPT, metrics);
+  // The user confirmed this themselves at upload time -- more reliable than
+  // a guess off a raw clip with no channel/caption context to lean on.
+  if (creatorHandle) parsed.creator_handle = creatorHandle;
+  console.log(`Gemini (uploaded video): ${parsed.exercises?.length ?? 0} exercises`);
+  return parsed;
+}
+
+// ── Top-level orchestrator for the file-upload import path ──────────────────
+// No text pipeline here -- there's no source URL to pull a title/transcript
+// from, just the video bytes plus whatever the user typed in. Gemini alone
+// does the extraction; no merge layer needed since there's only one source.
+export async function runUploadedVideoExtraction({ blobUrl, caption, creatorHandle }) {
+  const metrics = { pipelines: {} };
+  const start = Date.now();
+  const geminiOut = await runGeminiUploadedVideo({ blobUrl, creatorHandle }, metrics);
+  const merged = mergeFromGeminiOnly(geminiOut);
+  if (creatorHandle) merged.creator_handle = creatorHandle;
+  if (caption?.trim()) merged.notes = [merged.notes, `Creator-provided context: ${caption.trim().slice(0, 300)}`].filter(Boolean).join(' — ');
+  const result = finalizeWorkout(null, merged, blobUrl, 'Other');
+
+  metrics.totalMs = Date.now() - start;
+  metrics.exerciseCount = result.exerciseList?.length ?? 0;
+  metrics.totalKnownCostUsd = Object.values(metrics.pipelines).reduce((sum, p) => sum + (p.costUsd || 0), 0);
+  console.log('EXTRACTION_METRICS', JSON.stringify(metrics));
+  return result;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

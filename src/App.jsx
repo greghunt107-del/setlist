@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { upload } from "@vercel/blob/client";
 
 const YT_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
@@ -368,6 +369,9 @@ export default function App() {
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [importUrl, setImportUrl] = useState("");
   const [importCaption, setImportCaption] = useState("");
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadCreatorHandle, setUploadCreatorHandle] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({show:false,msg:""});
   const [libView, setLibView] = useState("grid");
@@ -416,10 +420,23 @@ export default function App() {
   },[]);
 
   const analyzeWithAI = async()=>{
-    if(!importUrl&&!importCaption) return;
+    if(!importUrl&&!importCaption&&!uploadFile) return;
     setLoading(true);
     try{
-      const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:importUrl,caption:importCaption})});
+      let body;
+      if(uploadFile){
+        setUploadProgress(0);
+        const blob = await upload(uploadFile.name, uploadFile, {
+          access:"public",
+          handleUploadUrl:"/api/upload",
+          onUploadProgress:(p)=>setUploadProgress(p.percentage),
+        });
+        setUploadProgress(null);
+        body = {blobUrl:blob.url, caption:importCaption, creatorHandle:uploadCreatorHandle.trim()};
+      } else {
+        body = {url:importUrl, caption:importCaption};
+      }
+      const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
       if(res.status===429){setLoading(false);showToast("Too many requests — try again in a bit");return;}
       const data=await res.json();
       let parsed;
@@ -432,9 +449,9 @@ export default function App() {
       const workoutVideoId = parsed.videoId||null;
 const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId,youtubeId:workoutVideoId,
   exerciseList:parsed.exerciseList?.map(ex=>({...ex,sourceVideoId:workoutVideoId,demoMode:workoutVideoId?"source_video":(ex.demoMode||"generic_demo")}))};
-      setImportUrl("");setImportCaption("");setLoading(false);
+      setImportUrl("");setImportCaption("");setUploadFile(null);setUploadCreatorHandle("");setLoading(false);
       setPendingWorkout(nw);setTab("review");
-    }catch(e){console.error("Analysis error:",e);setLoading(false);showToast("Analysis failed — try again");}
+    }catch(e){console.error("Analysis error:",e);setLoading(false);setUploadProgress(null);showToast("Analysis failed — try again");}
   };
 
   const startWorkout=workout=>{
@@ -568,14 +585,14 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
     // Instagram still requires a pasted caption to analyze.
     const isInstagram = importUrl && importUrl.includes("instagram.com");
     const isTikTok = importUrl && importUrl.includes("tiktok.com");
-    const canAnalyze = (importUrl || importCaption) && (!isInstagram || importCaption.trim().length > 0);
+    const canAnalyze = uploadFile ? uploadCreatorHandle.trim().length>0 : (importUrl || importCaption) && (!isInstagram || importCaption.trim().length > 0);
     return(
       loading?(
         <div className="con">
           <div className="loading-wrap">
             <div className="wl">{[1,2,3,4,5].map(i=><div key={i} className="wb"/>)}</div>
             <div style={{fontFamily:"'Syne',sans-serif",fontSize:19,fontWeight:800}}>Building Your Workout</div>
-            <div style={{fontSize:13,color:C.muted,lineHeight:1.5,textAlign:"center"}}>Transcribing and extracting exercises from your video.</div>
+            <div style={{fontSize:13,color:C.muted,lineHeight:1.5,textAlign:"center"}}>{uploadProgress!=null?`Uploading video — ${Math.round(uploadProgress)}%`:"Transcribing and extracting exercises from your video."}</div>
           </div>
         </div>
       ):(
@@ -584,6 +601,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
             <div style={{fontFamily:"'Syne',sans-serif",fontSize:15,fontWeight:800,color:C.text,marginBottom:5}}>Turn any workout into a structured routine</div>
             <div style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Paste a YouTube link and SetList will transcribe the audio and extract every exercise automatically.</div>
           </div>
+          {!uploadFile&&(
           <div>
             <div className="flbl">Post URL <span style={{color:C.muted,fontWeight:400,textTransform:"none",letterSpacing:0}}>(YouTube, Instagram, TikTok)</span></div>
             <input className="tinput" placeholder="https://www.youtube.com/watch?v=..." value={importUrl} onChange={e=>setImportUrl(e.target.value)} autoComplete="off"/>
@@ -598,6 +616,35 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
               </div>
             )}
           </div>
+          )}
+          {!importUrl&&(
+            <div style={{textAlign:"center",fontSize:11,color:C.muted,fontWeight:700,letterSpacing:0.5}}>— OR —</div>
+          )}
+          {!importUrl&&(
+          <div>
+            <div className="flbl">Upload a Video File <span style={{color:C.muted,fontWeight:400,textTransform:"none",letterSpacing:0}}>(saved from Instagram/TikTok/etc.)</span></div>
+            {uploadFile?(
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 12px"}}>
+                <span style={{fontSize:12,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:200}}>🎬 {uploadFile.name}</span>
+                <span style={{fontSize:12,color:C.red,fontWeight:700,cursor:"pointer"}} onClick={()=>{setUploadFile(null);setUploadCreatorHandle("");if(fileRef.current)fileRef.current.value="";}}>Remove</span>
+              </div>
+            ):(
+              <button className="btn sm" style={{width:"100%"}} onClick={()=>fileRef.current?.click()}>📁 Choose Video File</button>
+            )}
+            <input ref={fileRef} type="file" accept="video/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f)setUploadFile(f);}}/>
+            {uploadFile&&(
+              <div style={{marginTop:7,background:`${C.gold}18`,border:`1px solid ${C.gold}44`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.gold,lineHeight:1.5}}>
+                📋 Uploaded clips have no source link, so tell us who created it.
+              </div>
+            )}
+          </div>
+          )}
+          {uploadFile&&(
+            <div>
+              <div className="flbl">Creator Handle <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>required</span></div>
+              <input className="tinput" placeholder="@theirhandle" value={uploadCreatorHandle} onChange={e=>setUploadCreatorHandle(e.target.value)} autoComplete="off"/>
+            </div>
+          )}
           <div>
             <div className="flbl">Workout Description <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>← paste caption for best results</span></div>
             <textarea className="tinput" rows={5} placeholder={`Paste the caption, description, or type the workout yourself.\n\nExample:\n4x12 Kettlebell Swings\n3x10 Goblet Squats\n3x15 Romanian Deadlifts`} value={importCaption} onChange={e=>setImportCaption(e.target.value)}/>
@@ -606,6 +653,9 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           <button className="btn" onClick={analyzeWithAI} disabled={!canAnalyze}>⚡ Build Workout</button>
           {isInstagram&&!importCaption.trim()&&(
             <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add a description above to enable analysis</div>
+          )}
+          {uploadFile&&!uploadCreatorHandle.trim()&&(
+            <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add the creator's handle above to enable analysis</div>
           )}
           <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:13,padding:"11px 14px"}}>
             <div style={{fontSize:10,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>How to get best results</div>
