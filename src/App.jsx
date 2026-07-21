@@ -736,6 +736,9 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           <div className="stcell"><div className="stval">{logs.length}</div><div className="stlbl">Times Done</div></div>
         </div>
         {w.notes&&<div className="notesbox"><div className="noteslbl">Coach Notes</div>{w.notes}</div>}
+        <div style={{padding:"0 15px 15px"}}>
+          <button className="btn" onClick={()=>startWorkout(w)}>▶ Start Workout</button>
+        </div>
         <div style={{padding:"0 15px 9px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div className="sh" style={{margin:0}}>Exercises</div>
           <span style={{fontSize:10,color:C.muted}}>Tap ▶ for demo video</span>
@@ -765,7 +768,6 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           })}
         </div>
         <div style={{padding:15,display:"flex",flexDirection:"column",gap:9}}>
-          <button className="btn" onClick={()=>startWorkout(w)}>▶ Start Workout</button>
           <div className="row2">
             <button className="btn ghost" onClick={()=>{setBuilderMode(true);setCustomExercises([...(w.exerciseList||[])]);setCustomName(`${w.title} (remix)`);setTab("library");}}>✦ Remix</button>
             <button className="btn ghost" onClick={()=>setTab("progress")}>📊 Progress</button>
