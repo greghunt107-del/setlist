@@ -427,7 +427,7 @@ export default function App() {
       if(uploadFile){
         setUploadProgress(0);
         const blob = await upload(uploadFile.name, uploadFile, {
-          access:"public",
+          access:"private",
           handleUploadUrl:"/api/upload",
           onUploadProgress:(p)=>setUploadProgress(p.percentage),
         });
