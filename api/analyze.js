@@ -11,20 +11,24 @@ const RATE_LIMIT = 10;            // requests per window per IP
 const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const rateStore = new Map();      // ip -> [timestamps]
 
-export function checkRateLimit(ip) {
+// bucket namespaces each caller's budget separately (e.g. "analyze" vs
+// "upload") so uploading a file -- cheap, no AI-API spend -- doesn't eat
+// into the same 10/hour ceiling as a paid extraction.
+export function checkRateLimit(ip, bucket = 'analyze') {
+  const key = `${bucket}:${ip}`;
   const now = Date.now();
-  const hits = (rateStore.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS);
+  const hits = (rateStore.get(key) || []).filter(t => now - t < RATE_WINDOW_MS);
   if (hits.length >= RATE_LIMIT) {
-    rateStore.set(ip, hits);
+    rateStore.set(key, hits);
     const retryAfterSec = Math.ceil((hits[0] + RATE_WINDOW_MS - now) / 1000);
     return { allowed: false, retryAfterSec };
   }
   hits.push(now);
-  rateStore.set(ip, hits);
+  rateStore.set(key, hits);
   return { allowed: true };
 }
 
-function getClientIp(req) {
+export function getClientIp(req) {
   // Vercel sets x-forwarded-for; first entry is the client.
   const fwd = req.headers['x-forwarded-for'];
   if (typeof fwd === 'string' && fwd.length) return fwd.split(',')[0].trim();
