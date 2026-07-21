@@ -19,9 +19,8 @@ body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-hei
 .app::before{content:'';position:fixed;top:-180px;left:-80px;width:420px;height:420px;background:radial-gradient(circle,${C.blue}15 0%,transparent 70%);pointer-events:none;z-index:0}
 
 .hdr{padding:52px 18px 13px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;background:${C.bg}EE;backdrop-filter:blur(14px);border-bottom:1px solid ${C.border}}
-.logo{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;letter-spacing:-.5px}
+.logo{font-family:'Big Shoulders Display',sans-serif;font-size:30px;font-weight:800;letter-spacing:.2px}
 .logo em{color:${C.blueBright};font-style:normal}
-.logo-tag{font-size:9px;font-weight:700;letter-spacing:2px;color:${C.muted};text-transform:uppercase;margin-top:1px}
 .hdr-acts{display:flex;gap:8px}
 .ibtn{width:36px;height:36px;border-radius:10px;background:${C.card};border:1px solid ${C.border};color:${C.accentDim};display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .15s;flex-shrink:0}
 .ibtn:active{transform:scale(.92)}
@@ -34,7 +33,7 @@ body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-hei
 .ni:active{transform:scale(.92)}
 
 .con{flex:1;overflow-y:auto;overflow-x:hidden;padding:22px;padding-bottom:28px;position:relative;z-index:1;-webkit-overflow-scrolling:touch}
-.sh{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:${C.muted};text-transform:uppercase;margin-bottom:13px;margin-top:30px}
+.sh{font-family:'Big Shoulders Display',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:${C.muted};text-transform:uppercase;margin-bottom:13px;margin-top:30px}
 .sh:first-child{margin-top:4px}
 .sh-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;margin-top:30px}
 .sh-row:first-child{margin-top:4px}
@@ -46,10 +45,11 @@ body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-hei
 .wthumb{width:100%;height:148px;background:linear-gradient(160deg,${C.surface} 0%,${C.deep} 60%,#E8ECF3 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 .wthumb::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,${C.card} 100%)}
 .thmoji{font-size:52px;position:relative;z-index:1}
-.cbadge{position:absolute;top:11px;left:11px;z-index:2;background:${C.bg};border:1px solid ${C.blueBright};color:${C.blue};font-size:9px;font-weight:700;letter-spacing:1.5px;padding:3px 9px;border-radius:6px;text-transform:uppercase}
-.csrc{position:absolute;top:11px;right:11px;z-index:2;background:#00000066;color:#F0F3F8;font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;backdrop-filter:blur(8px)}
-.cbody{padding:16px 18px 18px}
-.ctitle{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.3px;margin-bottom:7px;line-height:1.15}
+.cbadge{position:absolute;top:11px;left:11px;z-index:2;background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;font-weight:700;font-size:9px;letter-spacing:1px;padding:4px 9px;border-radius:6px;text-transform:uppercase}
+.cbody{padding:14px 18px 18px}
+.ctitle{font-family:'Big Shoulders Display',sans-serif;font-size:17px;font-weight:800;letter-spacing:0;margin-bottom:4px;line-height:1.15}
+.cby{font-size:11.5px;color:${C.muted};margin-bottom:10px}
+.cby b{color:${C.mutedHi};font-weight:700}
 .cpills{display:flex;gap:7px;flex-wrap:wrap}
 .pill{background:${C.tag};border:1px solid ${C.border};border-radius:8px;font-size:10px;padding:3px 9px;color:${C.mutedHi};font-weight:600}
 .pill.hi{border-color:${C.blueBright}44;color:${C.blueBright}}
@@ -57,7 +57,7 @@ body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-hei
 
 .hscroll{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;margin-bottom:24px}
 .scard{background:${C.card};border:1px solid ${C.border};border-radius:14px;padding:10px 8px;min-width:0;width:100%}
-.sval{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${C.blueBright}}
+.sval{font-family:'Big Shoulders Display',sans-serif;font-size:20px;font-weight:800;color:${C.blueBright}}
 .slbl{font-size:9px;color:${C.muted};font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
 
 .flbl{font-size:10px;font-weight:700;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
@@ -66,7 +66,7 @@ body{background:${C.bg};color:${C.text};font-family:'Manrope',sans-serif;min-hei
 .tinput::placeholder{color:${C.muted}}
 select.tinput{appearance:none;cursor:pointer}
 
-.btn{background:${C.blueBright};color:#fff;border:none;border-radius:13px;padding:15px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:.3px;cursor:pointer;width:100%;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn{background:${C.blueBright};color:#fff;border:none;border-radius:13px;padding:15px;font-family:'Big Shoulders Display',sans-serif;font-size:15px;font-weight:700;letter-spacing:.3px;cursor:pointer;width:100%;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn:active{transform:scale(.97);opacity:.9}
 .btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
 .btn.ghost{background:${C.card};color:${C.text};border:1.5px solid ${C.border}}
@@ -77,7 +77,7 @@ select.tinput{appearance:none;cursor:pointer}
 .row2>.btn{flex:1}
 
 .tipcard{background:linear-gradient(135deg,${C.blue}22,${C.blue}08);border:1px solid ${C.borderHi};border-radius:18px;padding:17px}
-.tiptitle{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:${C.blueBright};letter-spacing:.5px;margin-bottom:11px}
+.tiptitle{font-family:'Big Shoulders Display',sans-serif;font-size:13px;font-weight:700;color:${C.blueBright};letter-spacing:.5px;margin-bottom:11px}
 .tipstep{display:flex;align-items:flex-start;gap:9px;margin-bottom:8px;font-size:12px;line-height:1.4;color:${C.accentDim}}
 .tipn{min-width:19px;height:19px;background:${C.blueBright};color:#fff;border-radius:5px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .ubox{background:${C.card};border:1.5px dashed ${C.border};border-radius:17px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s}
@@ -89,22 +89,45 @@ select.tinput{appearance:none;cursor:pointer}
 .wb:nth-child(1){animation-delay:0s}.wb:nth-child(2){animation-delay:.1s}.wb:nth-child(3){animation-delay:.2s}.wb:nth-child(4){animation-delay:.3s}.wb:nth-child(5){animation-delay:.4s}
 @keyframes wave{0%,100%{height:8px;opacity:.4}50%{height:32px;opacity:1}}
 
+.import-kicker{font-size:13px;color:${C.mutedHi};line-height:1.55;margin-bottom:2px}
+.paste-field{border:1.5px solid ${C.borderHi};border-radius:16px;padding:15px 15px 13px;background:${C.card};transition:border-color .2s,box-shadow .2s}
+.paste-field.hot{border-color:${C.blueBright};box-shadow:0 0 0 4px ${C.blueGlow}}
+.paste-field input{background:transparent;border:none;outline:none;color:${C.text};font-family:'Manrope',sans-serif;font-size:14px;width:100%}
+.paste-field input::placeholder{color:${C.muted}}
+.plat-row{display:flex;gap:8px}
+.plat-pill{flex:1;border-radius:11px;padding:9px 0;text-align:center;font-family:'Manrope',sans-serif;font-weight:700;font-size:10.5px;border:1px solid ${C.border};color:${C.muted};transition:all .2s}
+.plat-pill.active{border-color:${C.blueBright};color:${C.blue};background:${C.blueGlow}}
+.upload-alt{text-align:center;font-size:12px;color:${C.muted}}
+.upload-alt b{color:${C.blueBright};font-weight:700;cursor:pointer}
+
+.stage-list{display:flex;flex-direction:column;gap:0}
+.stage{display:flex;align-items:center;gap:12px;padding:13px 0;opacity:.35;transition:opacity .3s}
+.stage.done{opacity:1}
+.stage.active{opacity:1}
+.stage-dot{width:22px;height:22px;border-radius:50%;border:1.5px solid ${C.borderHi};flex:none;display:flex;align-items:center;justify-content:center;transition:all .25s}
+.stage.done .stage-dot{background:${C.green};border-color:${C.green}}
+.stage.active .stage-dot{border-color:${C.blueBright};box-shadow:0 0 0 4px ${C.blueGlow}}
+.stage-label{font-family:'Manrope',sans-serif;font-weight:500;font-size:13px;color:${C.mutedHi}}
+.stage.active .stage-label{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:16px;color:${C.text}}
+.stage.done .stage-label{color:${C.text};font-weight:700}
+.elapsed{text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:${C.muted}}
+
 .dtwrap{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:80px}
 .dthdr{padding:52px 15px 11px;display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:10;background:${C.bg}EE;backdrop-filter:blur(14px);border-bottom:1px solid ${C.border}}
 .backbtn{width:36px;height:36px;border-radius:10px;background:${C.card};border:1px solid ${C.border};color:${C.text};display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;flex-shrink:0}
-.dttitle{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;flex:1;line-height:1.1}
+.dttitle{font-family:'Big Shoulders Display',sans-serif;font-size:17px;font-weight:800;flex:1;line-height:1.1}
 .videoarea{width:100%;aspect-ratio:16/9;background:${C.deep};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden}
 .videoarea iframe{width:100%;height:100%;border:none;position:absolute;inset:0}
 .statsrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;padding:13px 15px}
 .stcell{background:${C.card};border:1px solid ${C.border};border-radius:13px;padding:11px 9px;text-align:center}
-.stval{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:${C.blueBright}}
+.stval{font-family:'Big Shoulders Display',sans-serif;font-size:21px;font-weight:800;color:${C.blueBright}}
 .stlbl{font-size:8px;color:${C.muted};font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:3px}
 .notesbox{background:${C.surface};border:1px solid ${C.border};border-radius:13px;padding:13px 15px;margin:0 15px 13px;font-size:12px;line-height:1.6;color:${C.accentDim}}
 .noteslbl{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${C.muted};margin-bottom:5px}
 
 .exlist{display:flex;flex-direction:column;gap:8px;padding:0 15px}
 .exitem{background:${C.card};border:1px solid ${C.border};border-radius:15px;padding:12px 13px;display:flex;align-items:center;gap:11px;transition:border-color .15s}
-.exnum{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${C.borderHi};min-width:22px}
+.exnum{font-family:'Big Shoulders Display',sans-serif;font-size:18px;font-weight:800;color:${C.borderHi};min-width:22px}
 .exemoji{font-size:19px;min-width:22px}
 .exinfo{flex:1;min-width:0}
 .exname{font-weight:700;font-size:13px;margin-bottom:2px;letter-spacing:-.2px}
@@ -131,7 +154,7 @@ select.tinput{appearance:none;cursor:pointer}
 
 .vid-overlay{position:fixed;inset:0;background:#000000EE;z-index:9999;display:flex;flex-direction:column;animation:fadeIn .2s ease}@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .vid-overlay-hdr{padding:52px 16px 14px;display:flex;align-items:center;gap:12px;background:${C.bg};border-bottom:1px solid ${C.border}}
-.vid-overlay-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;flex:1}
+.vid-overlay-title{font-family:'Big Shoulders Display',sans-serif;font-size:16px;font-weight:800;flex:1}
 .vid-overlay-body{flex:1;display:flex;flex-direction:column;padding:16px;gap:12px;overflow-y:auto}
 .vid-overlay-player{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000}
 .vid-overlay-player iframe{width:100%;height:100%;border:none}
@@ -143,7 +166,7 @@ select.tinput{appearance:none;cursor:pointer}
 
 .aex-card{margin:0 15px 11px;background:${C.card};border:1px solid ${C.border};border-radius:17px;overflow:hidden;transition:border-color .2s}
 .aex-header{padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
-.aex-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.aex-title{font-family:'Big Shoulders Display',sans-serif;font-size:15px;font-weight:800;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .aex-status{font-size:11px;color:${C.muted};font-weight:600}
 .aex-done{color:${C.green};font-weight:700}
 
@@ -180,11 +203,11 @@ select.tinput{appearance:none;cursor:pointer}
 .lgcard-tag{position:absolute;top:9px;right:9px;background:${C.tag};border:1px solid ${C.border};border-radius:5px;font-size:8px;color:${C.mutedHi};padding:2px 6px;font-weight:700}
 .llitem{background:${C.card};border:1px solid ${C.border};border-radius:13px;padding:11px 13px;display:flex;align-items:center;gap:11px;margin-bottom:7px;transition:border-color .15s}
 .llitem:active{border-color:${C.borderHi}}
-.glbl{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:${C.blueBright};letter-spacing:1.5px;text-transform:uppercase;padding:13px 0 7px;border-bottom:1px solid ${C.border};margin-bottom:9px}
+.glbl{font-family:'Big Shoulders Display',sans-serif;font-size:10px;font-weight:700;color:${C.blueBright};letter-spacing:1.5px;text-transform:uppercase;padding:13px 0 7px;border-bottom:1px solid ${C.border};margin-bottom:9px}
 
 .bwrap{display:flex;flex-direction:column;gap:11px}
 .bhdr{background:${C.card};border:1px solid ${C.borderHi};border-radius:17px;padding:15px}
-.bnameinput{background:transparent;border:none;outline:none;font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:${C.text};width:100%;letter-spacing:-.3px}
+.bnameinput{background:transparent;border:none;outline:none;font-family:'Big Shoulders Display',sans-serif;font-size:19px;font-weight:800;color:${C.text};width:100%;letter-spacing:0}
 .bnameinput::placeholder{color:${C.muted}}
 .bexitem{background:${C.card};border:1px solid ${C.border};border-radius:13px;padding:11px 13px;display:flex;align-items:center;gap:9px}
 .review-input{background:${C.card};border:1.5px solid ${C.border};border-radius:10px;padding:0;height:36px;line-height:36px;color:${C.text};font-family:'DM Mono',monospace;font-size:13px;width:100%;outline:none;text-align:center;transition:border-color .2s;resize:none;box-sizing:border-box;display:block}
@@ -192,21 +215,21 @@ select.tinput{appearance:none;cursor:pointer}
 .rmbtn{width:27px;height:27px;border-radius:7px;background:${C.surface};border:1px solid ${C.border};color:${C.muted};display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:all .15s;flex-shrink:0}
 .rmbtn:active{background:#FF4D4D22;border-color:#FF4D4D55;color:${C.red}}
 .picker{background:${C.surface};border:1px solid ${C.border};border-radius:17px;padding:15px;max-height:300px;overflow-y:auto}
-.ptitle{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:${C.muted};letter-spacing:1.5px;text-transform:uppercase;margin-bottom:11px}
+.ptitle{font-family:'Big Shoulders Display',sans-serif;font-size:10px;font-weight:700;color:${C.muted};letter-spacing:1.5px;text-transform:uppercase;margin-bottom:11px}
 .pitem{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:11px;cursor:pointer;transition:background .15s;margin-bottom:3px}
 .pitem:active{background:${C.card}}
 
 .modal-bg{position:fixed;inset:0;background:#00000088;backdrop-filter:blur(6px);z-index:100;display:flex;flex-direction:column;justify-content:flex-end}
 .modal{background:${C.deep};border-top:1px solid ${C.borderHi};border-radius:24px 24px 0 0;padding:20px 18px 36px;display:flex;flex-direction:column;gap:13px;max-height:88vh;overflow-y:auto}
-.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.3px}
+.modal-title{font-family:'Big Shoulders Display',sans-serif;font-size:18px;font-weight:800;letter-spacing:0}
 .confirm-modal{background:${C.deep};border-top:1px solid ${C.borderHi};border-radius:24px 24px 0 0;padding:28px 20px 36px;display:flex;flex-direction:column;gap:16px}
 
 .streak-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:11px}
 .streak-cell{background:${C.card};border:1px solid ${C.border};border-radius:13px;padding:13px 11px;text-align:center}
-.streak-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:${C.gold}}
+.streak-val{font-family:'Big Shoulders Display',sans-serif;font-size:22px;font-weight:800;color:${C.gold}}
 .streak-lbl{font-size:9px;color:${C.muted};font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
 .prchart{background:${C.card};border:1px solid ${C.border};border-radius:15px;padding:15px;margin-bottom:11px}
-.prchart-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;margin-bottom:12px}
+.prchart-title{font-family:'Big Shoulders Display',sans-serif;font-size:13px;font-weight:800;margin-bottom:12px}
 .bar-chart{display:flex;align-items:flex-end;gap:6px;height:70px}
 .bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
 .bar{width:100%;border-radius:5px 5px 0 0;background:${C.blueBright}44;min-height:4px}
@@ -215,14 +238,14 @@ select.tinput{appearance:none;cursor:pointer}
 .pr-badge{display:inline-flex;align-items:center;gap:5px;background:${C.gold}18;border:1px solid ${C.gold}44;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:${C.gold}}
 .hlog-item{background:${C.card};border:1px solid ${C.border};border-radius:15px;padding:13px 14px;margin-bottom:9px}
 .hlog-date{font-family:'DM Mono',monospace;font-size:10px;color:${C.muted};margin-bottom:5px}
-.hlog-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;margin-bottom:6px}
+.hlog-title{font-family:'Big Shoulders Display',sans-serif;font-size:15px;font-weight:800;margin-bottom:6px}
 .hlog-stats{display:flex;gap:10px;flex-wrap:wrap}
 .hlog-stat{font-size:11px;color:${C.mutedHi};font-weight:600}
 .hlog-stat em{color:${C.text};font-style:normal}
 
 .empty{text-align:center;padding:44px 22px;color:${C.muted}}
 .empty-icon{font-size:44px;margin-bottom:11px}
-.etitle{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:${C.text};margin-bottom:5px}
+.etitle{font-family:'Big Shoulders Display',sans-serif;font-size:17px;font-weight:800;color:${C.text};margin-bottom:5px}
 .esub{font-size:12px;line-height:1.6}
 
 .toast{position:fixed;bottom:94px;left:50%;transform:translateX(-50%) translateY(16px);background:${C.blueBright};color:#fff;padding:9px 18px;border-radius:11px;font-weight:700;font-size:12px;opacity:0;transition:all .25s;pointer-events:none;z-index:999;white-space:nowrap}
@@ -373,6 +396,9 @@ export default function App() {
   const [uploadCreatorHandle, setUploadCreatorHandle] = useState("");
   const [uploadProgress, setUploadProgress] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [analyzeStage, setAnalyzeStage] = useState(0);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const uploadProgressRef = useRef(null);
   const [toast, setToast] = useState({show:false,msg:""});
   const [libView, setLibView] = useState("grid");
   const [libFilter, setLibFilter] = useState("All");
@@ -412,6 +438,22 @@ export default function App() {
     else{clearInterval(timerRef.current);setTimerSec(0);}
     return()=>clearInterval(timerRef.current);
   },[activeWorkout]);
+
+  useEffect(()=>{uploadProgressRef.current=uploadProgress;},[uploadProgress]);
+
+  // Real progress only exists for the upload step (via onUploadProgress). The rest of
+  // extraction is a single request/response with no server-side progress to report, so
+  // once the upload (if any) finishes, stage advancement is a timed approximation of the
+  // real backend order -- it snaps to done the moment the actual response lands.
+  useEffect(()=>{
+    if(!loading){setAnalyzeStage(0);setElapsedSec(0);return;}
+    const elapsedTimer=setInterval(()=>setElapsedSec(s=>s+1),1000);
+    const stageTimer=setInterval(()=>{
+      if(uploadProgressRef.current!=null)return;
+      setAnalyzeStage(s=>Math.min(s+1,3));
+    },2400);
+    return()=>{clearInterval(elapsedTimer);clearInterval(stageTimer);};
+  },[loading]);
 
   useEffect(()=>{
     const p=new URLSearchParams(window.location.search);
@@ -562,16 +604,16 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           <div key={w.id} className={`wcard ${i===0&&!search?"feat":""}`} onClick={()=>{setSelectedWorkout(w);setTab("detail");}}>
             <div className="wthumb" style={(w.videoId||w.youtubeId)?{backgroundImage:`url(https://img.youtube.com/vi/${w.videoId||w.youtubeId}/hqdefault.jpg)`,backgroundSize:"cover",backgroundPosition:"center"}:w.thumbnailUrl?{backgroundImage:`url(${w.thumbnailUrl})`,backgroundSize:"cover",backgroundPosition:"center"}:{}}>
               {!(w.videoId||w.youtubeId||w.thumbnailUrl)&&<span className="thmoji">{w.emoji}</span>}
-              <span className="cbadge">{w.tag}</span>
-              <span className="csrc">{w.isOwn?"✦ Mine":w.influencer||w.source}</span>
+              <span className="cbadge">{w.source}</span>
             </div>
             <div className="cbody">
               <div className="ctitle">{w.title}</div>
+              <div className="cby">By <b>{w.influencer||w.source}</b></div>
               <div className="cpills">
+                <span className="pill">{w.tag}</span>
                 <span className="pill hi">⏱ {w.duration}m</span>
                 <span className="pill">🏋️ {w.exerciseList?.length} exercises</span>
                 <span className="pill">{w.level}</span>
-                {w.isOwn&&<span className="pill grn">✦ Custom</span>}
               </div>
             </div>
           </div>
@@ -583,89 +625,85 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
   const ImportScreen=()=>{
     // TikTok captions are auto-fetched server-side (oEmbed), so only
     // Instagram still requires a pasted caption to analyze.
+    const isYouTube = importUrl && (importUrl.includes("youtube.com")||importUrl.includes("youtu.be"));
     const isInstagram = importUrl && importUrl.includes("instagram.com");
     const isTikTok = importUrl && importUrl.includes("tiktok.com");
     const canAnalyze = uploadFile ? uploadCreatorHandle.trim().length>0 : (importUrl || importCaption) && (!isInstagram || importCaption.trim().length > 0);
+    const stages = uploadFile
+      ? ["Uploading your video","Finding your exercises","Matching timestamps","Building your workout"]
+      : ["Reading the video","Finding your exercises","Matching timestamps","Building your workout"];
     return(
       loading?(
         <div className="con">
-          <div className="loading-wrap">
-            <div className="wl">{[1,2,3,4,5].map(i=><div key={i} className="wb"/>)}</div>
-            <div style={{fontFamily:"'Syne',sans-serif",fontSize:19,fontWeight:800}}>Building Your Workout</div>
-            <div style={{fontSize:13,color:C.muted,lineHeight:1.5,textAlign:"center"}}>{uploadProgress!=null?`Uploading video — ${Math.round(uploadProgress)}%`:"Transcribing and extracting exercises from your video."}</div>
+          <div className="loading-wrap" style={{alignItems:"stretch",padding:"56px 6px"}}>
+            <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:21,fontWeight:800,textAlign:"center",marginBottom:6}}>Building your workout</div>
+            <div className="stage-list">
+              {stages.map((label,i)=>{
+                const uploading = uploadFile&&i===0&&uploadProgress!=null;
+                const state = i<analyzeStage?"done":i===analyzeStage?"active":"";
+                return(
+                  <div key={label} className={`stage ${state}`}>
+                    <span className="stage-dot">{state==="done"&&<svg viewBox="0 0 12 12" width="11" height="11"><path d="M2 6l3 3 5-6" stroke="#fff" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}</span>
+                    <span className="stage-label">{uploading?`${label} — ${Math.round(uploadProgress)}%`:label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="elapsed">{fmtTime(elapsedSec)} elapsed</div>
           </div>
         </div>
       ):(
-        <div className="con" style={{display:"flex",flexDirection:"column",gap:13}}>
-          <div style={{background:`linear-gradient(135deg,${C.blue}22,${C.blue}08)`,border:`1px solid ${C.borderHi}`,borderRadius:18,padding:17}}>
-            <div style={{fontFamily:"'Syne',sans-serif",fontSize:15,fontWeight:800,color:C.text,marginBottom:5}}>Turn any workout into a structured routine</div>
-            <div style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Paste a YouTube link and SetList will transcribe the audio and extract every exercise automatically.</div>
-          </div>
-          {!uploadFile&&(
-          <div>
-            <div className="flbl">Post URL <span style={{color:C.muted,fontWeight:400,textTransform:"none",letterSpacing:0}}>(YouTube, Instagram, TikTok)</span></div>
-            <input className="tinput" placeholder="https://www.youtube.com/watch?v=..." value={importUrl} onChange={e=>setImportUrl(e.target.value)} autoComplete="off"/>
-            {isInstagram&&(
-              <div style={{marginTop:7,background:`${C.gold}18`,border:`1px solid ${C.gold}44`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.gold,lineHeight:1.5}}>
-                📋 Instagram links need a description for accurate results. Paste the caption below.
+        <div className="con" style={{display:"flex",flexDirection:"column",gap:14}}>
+          {!uploadFile?(
+            <>
+              <div className="import-kicker">Paste a link from any workout video. We'll find the exercises, sets, and timestamps for you.</div>
+              <div className={`paste-field ${importUrl?"hot":""}`}>
+                <input placeholder="youtube.com, tiktok.com, or instagram.com link" value={importUrl} onChange={e=>setImportUrl(e.target.value)} autoComplete="off"/>
               </div>
-            )}
-            {isTikTok&&(
-              <div style={{marginTop:7,background:`${C.blue}18`,border:`1px solid ${C.borderHi}`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.blueBright,lineHeight:1.5}}>
-                ✓ TikTok caption is fetched automatically. If it doesn't list the exercises, paste them below for accurate results.
+              <div className="plat-row">
+                <span className={`plat-pill ${isYouTube?"active":""}`}>YouTube</span>
+                <span className={`plat-pill ${isTikTok?"active":""}`}>TikTok</span>
+                <span className={`plat-pill ${isInstagram?"active":""}`}>Instagram</span>
               </div>
-            )}
-          </div>
-          )}
-          {!importUrl&&(
-            <div style={{textAlign:"center",fontSize:11,color:C.muted,fontWeight:700,letterSpacing:0.5}}>— OR —</div>
-          )}
-          {!importUrl&&(
-          <div>
-            <div className="flbl">Upload a Video File <span style={{color:C.muted,fontWeight:400,textTransform:"none",letterSpacing:0}}>(saved from Instagram/TikTok/etc.)</span></div>
-            {uploadFile?(
+              {isInstagram&&(
+                <div style={{background:`${C.gold}18`,border:`1px solid ${C.gold}44`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.gold,lineHeight:1.5}}>
+                  Instagram links need a description for accurate results — paste the caption below.
+                </div>
+              )}
+              {isTikTok&&(
+                <div style={{background:`${C.blue}18`,border:`1px solid ${C.borderHi}`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.blueBright,lineHeight:1.5}}>
+                  Caption is fetched automatically. If it doesn't list the exercises, paste them below for accurate results.
+                </div>
+              )}
+            </>
+          ):(
+            <div>
+              <div className="flbl">Uploaded video</div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 12px"}}>
-                <span style={{fontSize:12,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:200}}>🎬 {uploadFile.name}</span>
+                <span style={{fontSize:12,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:200}}>{uploadFile.name}</span>
                 <span style={{fontSize:12,color:C.red,fontWeight:700,cursor:"pointer"}} onClick={()=>{setUploadFile(null);setUploadCreatorHandle("");if(fileRef.current)fileRef.current.value="";}}>Remove</span>
               </div>
-            ):(
-              <button className="btn sm" style={{width:"100%"}} onClick={()=>fileRef.current?.click()}>📁 Choose Video File</button>
-            )}
-            <input ref={fileRef} type="file" accept="video/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f)setUploadFile(f);}}/>
-            {uploadFile&&(
-              <div style={{marginTop:7,background:`${C.gold}18`,border:`1px solid ${C.gold}44`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.gold,lineHeight:1.5}}>
-                📋 Uploaded clips have no source link, so tell us who created it.
+              <div style={{marginTop:12}}>
+                <div className="flbl">Creator handle <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>required</span></div>
+                <input className="tinput" placeholder="@theirhandle" value={uploadCreatorHandle} onChange={e=>setUploadCreatorHandle(e.target.value)} autoComplete="off"/>
               </div>
-            )}
-          </div>
-          )}
-          {uploadFile&&(
-            <div>
-              <div className="flbl">Creator Handle <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>required</span></div>
-              <input className="tinput" placeholder="@theirhandle" value={uploadCreatorHandle} onChange={e=>setUploadCreatorHandle(e.target.value)} autoComplete="off"/>
             </div>
           )}
+          <input ref={fileRef} type="file" accept="video/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f)setUploadFile(f);}}/>
           <div>
-            <div className="flbl">Workout Description <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>← paste caption for best results</span></div>
-            <textarea className="tinput" rows={5} placeholder={`Paste the caption, description, or type the workout yourself.\n\nExample:\n4x12 Kettlebell Swings\n3x10 Goblet Squats\n3x15 Romanian Deadlifts`} value={importCaption} onChange={e=>setImportCaption(e.target.value)}/>
-            <div style={{fontSize:10,color:C.muted,marginTop:5}}>💡 YouTube and TikTok fetch automatically. For Instagram paste the caption.</div>
+            <div className="flbl">Description <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>optional — paste caption, or type your own</span></div>
+            <textarea className="tinput" rows={4} placeholder={`Paste the caption, or type the workout yourself:\n\n4x12 Kettlebell Swings\n3x10 Goblet Squats\n3x15 Romanian Deadlifts`} value={importCaption} onChange={e=>setImportCaption(e.target.value)}/>
           </div>
-          <button className="btn" onClick={analyzeWithAI} disabled={!canAnalyze}>⚡ Build Workout</button>
+          <button className="btn" onClick={analyzeWithAI} disabled={!canAnalyze}>Build workout</button>
           {isInstagram&&!importCaption.trim()&&(
             <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add a description above to enable analysis</div>
           )}
           {uploadFile&&!uploadCreatorHandle.trim()&&(
             <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add the creator's handle above to enable analysis</div>
           )}
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:13,padding:"11px 14px"}}>
-            <div style={{fontSize:10,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>How to get best results</div>
-            {[["YouTube ✓","Paste the link — audio is transcribed automatically"],["TikTok ✓","Paste the link — caption is fetched automatically"],["Instagram","Paste link + copy the caption from the post"],["No link","Just type or paste the workout directly below"]].map(([p,t])=>(
-              <div key={p} style={{display:"flex",gap:9,marginBottom:6,fontSize:12,lineHeight:1.4}}>
-                <span style={{fontWeight:700,color:C.blueBright,minWidth:80,fontSize:11}}>{p}</span>
-                <span style={{color:C.accentDim}}>{t}</span>
-              </div>
-            ))}
-          </div>
+          {!uploadFile&&(
+            <div className="upload-alt">No link? <b onClick={()=>fileRef.current?.click()}>Upload a video</b> instead</div>
+          )}
         </div>
       )
     );
@@ -987,7 +1025,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
     <div className="confirm-modal" onClick={e=>e.stopPropagation()}>
       <div style={{textAlign:"center"}}>
         <div style={{fontSize:36,marginBottom:12}}>🏁</div>
-        <div style={{fontFamily:"'Syne',sans-serif",fontSize:20,fontWeight:800,marginBottom:8}}>Finish Workout?</div>
+        <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:20,fontWeight:800,marginBottom:8}}>Finish Workout?</div>
         <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Are you sure you want to finish and log this workout?</div>
       </div>
       <button className="btn grn" onClick={()=>{setShowFinishConfirm(false);finishWorkout();}}>✓ Yes, Finish & Log</button>
@@ -1025,7 +1063,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
     const [slide,setSlide]=useState(0);
     const slides=[
       {emoji:"🏋️",title:"Welcome to SetList",sub:"Your personal workout library.\nImport any workout from YouTube,\nInstagram, or TikTok in seconds."},
-      {emoji:"⚡",title:"How It Works",sub:"Paste a YouTube link and our AI\ntranscribes the video and extracts\nevery exercise automatically."},
+      {emoji:"⚡",title:"How It Works",sub:"Paste a link from YouTube, TikTok,\nor Instagram and our AI finds\nevery exercise automatically."},
       {emoji:"🔥",title:"Build Your Library",sub:"Save workouts, track your progress,\nbuild custom routines, and\nnever lose a workout again."},
     ];
     const s=slides[slide];
@@ -1034,7 +1072,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
         <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24}}>
           <div style={{width:120,height:120,borderRadius:32,background:`linear-gradient(135deg,${C.blue}44,${C.blueBright}22)`,border:`1px solid ${C.borderHi}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:56}}>{s.emoji}</div>
           <div>
-            <div style={{fontFamily:"'Syne',sans-serif",fontSize:26,fontWeight:800,letterSpacing:"-.5px",marginBottom:12,color:C.text}}>{s.title}</div>
+            <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:26,fontWeight:800,letterSpacing:"0px",marginBottom:12,color:C.text}}>{s.title}</div>
             <div style={{fontSize:14,color:C.muted,lineHeight:1.7,whiteSpace:"pre-line"}}>{s.sub}</div>
           </div>
           <div style={{display:"flex",gap:7,marginTop:8}}>
@@ -1044,14 +1082,8 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           </div>
         </div>
         <div style={{width:"100%",display:"flex",flexDirection:"column",gap:10}}>
-          {slide<slides.length-1?(
-            <>
-              <button className="btn" onClick={()=>setSlide(s=>s+1)}>Continue →</button>
-              <button className="btn ghost" onClick={completeOnboarding} style={{padding:11,fontSize:12,color:C.muted}}>Skip</button>
-            </>
-          ):(
-            <button className="btn" onClick={completeOnboarding}>Get Started 🔥</button>
-          )}
+          <button className="btn" onClick={()=>slide<slides.length-1?setSlide(s=>s+1):completeOnboarding()}>{slide<slides.length-1?"Continue →":"Get started"}</button>
+          <button className="btn ghost" onClick={completeOnboarding} style={{padding:11,fontSize:12,color:C.muted,visibility:slide<slides.length-1?"visible":"hidden"}}>Skip</button>
         </div>
       </div>
     );
@@ -1150,16 +1182,18 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           <div key={d.id} style={{position:"absolute",left:`${d.x}%`,top:-20,width:d.size,height:d.size,borderRadius:d.size>8?4:50,background:d.color,animation:`confetti ${d.dur}s ${d.delay}s ease-in forwards`,pointerEvents:"none"}}/>
         ))}
         <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,animation:"popIn .5s ease forwards"}}>
-          <div style={{fontSize:80}}>🎉</div>
+          <div style={{width:72,height:72,borderRadius:"50%",background:C.blueGlow,border:`1.5px solid ${C.blueBright}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <svg viewBox="0 0 24 24" width="30" height="30"><path d="M4 12.5l5 5L20 6" stroke={C.blueBright} strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </div>
           <div>
-            <div style={{fontFamily:"'Syne',sans-serif",fontSize:28,fontWeight:800,marginBottom:8}}>Workout Complete!</div>
+            <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:28,fontWeight:800,marginBottom:8}}>Workout Complete!</div>
             <div style={{fontSize:14,color:C.muted}}>{c.title}</div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,width:"100%",marginTop:8}}>
             {[["⏱",fmtTime(c.duration),"Duration"],["🏋️",c.exercises,"Exercises"],["✅",c.sets,"Sets Done"],["🔥",c.volume>0?`${c.volume}lb`:"—","Volume"]].map(([icon,val,lbl])=>(
               <div key={lbl} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:"14px 10px"}}>
                 <div style={{fontSize:22,marginBottom:4}}>{icon}</div>
-                <div style={{fontFamily:"'Syne',sans-serif",fontSize:22,fontWeight:800,color:C.blueBright}}>{val}</div>
+                <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:22,fontWeight:800,color:C.blueBright}}>{val}</div>
                 <div style={{fontSize:10,color:C.muted,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",marginTop:2}}>{lbl}</div>
               </div>
             ))}
@@ -1188,7 +1222,7 @@ const renderMain=()=>{
       <div className="app">
         {tab!=="detail"&&tab!=="active"&&(
           <div className="hdr">
-            <div><div className="logo">Set<em>List</em></div><div className="logo-tag">by you</div></div>
+            <div className="logo">Set<em>List</em></div>
           </div>
         )}
         {renderMain()}
