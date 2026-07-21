@@ -858,15 +858,15 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
               <span style={{color:C.muted,fontSize:15}}>⠿</span>
               <span style={{fontSize:18}}>{EMO[ex.name]||"💪"}</span>
               <div style={{flex:1}}>
-                <div style={{fontWeight:700,fontSize:13}}>{ex.name}</div>
+                <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontWeight:800,fontSize:14}}>{ex.name}</div>
                 <div style={{fontSize:11,color:C.muted}}>{ex.sets||ex.defaultSets} sets · {ex.reps||ex.defaultReps} · {ex.influencer||"You"}</div>
               </div>
               <div className="rmbtn" onClick={()=>setCustomExercises(p=>p.filter((_,j)=>j!==i))}>×</div>
             </div>
           ))}
           <div className="row2">
-            <button className="btn ghost sm" onClick={()=>{setShowPicker(p=>!p);setShowCreateEx(false);}}>{showPicker?"▲ Hide Library":"＋ From Library"}</button>
-            <button className="btn ghost sm" onClick={()=>{setShowCreateEx(true);setShowPicker(false);}}>✦ New Exercise</button>
+            <button className="btn ghost sm" onClick={()=>{setShowPicker(p=>!p);setShowCreateEx(false);}}>{showPicker?"Hide library":"From library"}</button>
+            <button className="btn ghost sm" onClick={()=>{setShowCreateEx(true);setShowPicker(false);}}>New exercise</button>
           </div>
           {showPicker&&(
             <div className="picker">
@@ -875,7 +875,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
                 <div key={i} className="pitem" onClick={()=>addToCustom(ex)}>
                   <span style={{fontSize:19}}>{EMO[ex.name]||"💪"}</span>
                   <div style={{flex:1}}>
-                    <div style={{fontWeight:700,fontSize:13}}>{ex.name}</div>
+                    <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontWeight:800,fontSize:14}}>{ex.name}</div>
                     <div style={{fontSize:10,color:C.muted}}>{ex.influencer} · {ex.muscleGroup}</div>
                   </div>
                   <span style={{color:C.blueBright,fontSize:20}}>+</span>
@@ -892,13 +892,10 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
     );
     return(
       <div className="con">
-        <div className="sh-row">
-          <span className="sh" style={{margin:0}}>Exercise Library · {library.length}</span>
-          <span className="sa" onClick={()=>setBuilderMode(true)}>+ Build</span>
-        </div>
-        <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
-          <button className="btn sm" onClick={()=>setBuilderMode(true)}>✦ Build Workout</button>
-          <button className="btn sm ghost" onClick={()=>setShowCreateEx(true)}>＋ New Exercise</button>
+        <div className="sh" style={{marginTop:0}}>Exercise Library · {library.length}</div>
+        <div className="row2" style={{marginBottom:14}}>
+          <button className="btn sm" onClick={()=>setBuilderMode(true)}>Build workout</button>
+          <button className="btn sm ghost" onClick={()=>setShowCreateEx(true)}>+ New exercise</button>
         </div>
         <div className="lctrl">
           {["grid","list","grouped"].map(v=>(
@@ -919,9 +916,9 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
                 {ex.isOwn&&<div style={{position:"absolute",top:9,left:9,background:`${C.green}22`,border:`1px solid ${C.green}44`,borderRadius:5,fontSize:8,color:C.green,padding:"2px 6px",fontWeight:700}}>Mine</div>}
                 <div className="lgcard-tag">{ex.muscleGroup?.split(" ")[0]}</div>
                 <div style={{fontSize:26,marginBottom:7,marginTop:ex.isOwn?16:0}}>{EMO[ex.name]||"💪"}</div>
-                <div style={{fontWeight:700,fontSize:13,marginBottom:3}}>{ex.name}</div>
+                <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontWeight:800,fontSize:15,marginBottom:3,lineHeight:1.15}}>{ex.name}</div>
                 <div style={{fontSize:10,color:C.muted}}>{ex.sets||ex.defaultSets} sets · {ex.reps||ex.defaultReps}</div>
-                <div style={{fontSize:9,color:C.blueBright,marginTop:5,fontWeight:700}}>{ex.influencer}</div>
+                <div style={{fontSize:10,color:C.muted,marginTop:5}}>By <b style={{color:C.mutedHi,fontWeight:700}}>{ex.influencer}</b></div>
                 <div style={{fontSize:9,color:C.muted,marginTop:4}}>▶ Tap for demo</div>
               </div>
             ))}
@@ -932,9 +929,9 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
               <div key={i} className="llitem" onClick={()=>setVideoOverlay(ex)}>
                 <span style={{fontSize:21}}>{EMO[ex.name]||"💪"}</span>
                 <div style={{flex:1}}>
-                  <div style={{fontWeight:700,fontSize:13,marginBottom:2}}>{ex.name}</div>
+                  <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontWeight:800,fontSize:14,marginBottom:2}}>{ex.name}</div>
                   <div style={{fontSize:11,color:C.muted}}>{ex.sets||ex.defaultSets} sets · {ex.reps||ex.defaultReps} · Rest {ex.rest||"—"}</div>
-                  <div style={{fontSize:9,color:C.blueBright,marginTop:2,fontWeight:700}}>{ex.influencer}</div>
+                  <div style={{fontSize:10,color:C.muted,marginTop:2}}>By <b style={{color:C.mutedHi,fontWeight:700}}>{ex.influencer}</b></div>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
                   <div style={{background:C.tag,border:`1px solid ${C.border}`,borderRadius:7,fontSize:9,padding:"2px 7px",color:C.mutedHi,fontWeight:700}}>{ex.muscleGroup?.split(" ")[0]}</div>
@@ -945,7 +942,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           </div>
         ):(
           <div>
-            {Object.entries(MG).map(([group])=>{
+            {[...Object.keys(MG),"Other"].map(group=>{
               const exs=filtered.filter(e=>e.muscleGroup===group);
               if(!exs.length) return null;
               return(<div key={group}>
@@ -954,9 +951,9 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
                   <div key={i} className="llitem" onClick={()=>setVideoOverlay(ex)}>
                     <span style={{fontSize:21}}>{EMO[ex.name]||"💪"}</span>
                     <div style={{flex:1}}>
-                      <div style={{fontWeight:700,fontSize:13,marginBottom:2}}>{ex.name}</div>
+                      <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontWeight:800,fontSize:14,marginBottom:2}}>{ex.name}</div>
                       <div style={{fontSize:11,color:C.muted}}>{ex.sets||ex.defaultSets} sets · {ex.reps||ex.defaultReps}</div>
-                      <div style={{fontSize:9,color:C.blueBright,marginTop:2,fontWeight:700}}>{ex.influencer}</div>
+                      <div style={{fontSize:10,color:C.muted,marginTop:2}}>By <b style={{color:C.mutedHi,fontWeight:700}}>{ex.influencer}</b></div>
                     </div>
                     <div style={{fontSize:9,color:C.muted}}>▶ Demo</div>
                   </div>
@@ -965,7 +962,6 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
             })}
           </div>
         )}
-        {library.length>0&&!builderMode&&<div style={{padding:"16px 0 8px"}}><button className="btn" onClick={()=>setBuilderMode(true)}>⚡ Build Custom Workout</button></div>}
       </div>
     );
   };
