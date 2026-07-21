@@ -595,6 +595,10 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
             <textarea className="tinput" rows={5} placeholder={`Paste the caption, description, or type the workout yourself.\n\nExample:\n4x12 Kettlebell Swings\n3x10 Goblet Squats\n3x15 Romanian Deadlifts`} value={importCaption} onChange={e=>setImportCaption(e.target.value)}/>
             <div style={{fontSize:10,color:C.muted,marginTop:5}}>💡 YouTube links auto-transcribe. For Instagram/TikTok paste the caption.</div>
           </div>
+          <button className="btn" onClick={analyzeWithAI} disabled={!canAnalyze}>⚡ Build Workout</button>
+          {isInstagramOrTikTok&&!importCaption.trim()&&(
+            <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add a description above to enable analysis</div>
+          )}
           <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:13,padding:"11px 14px"}}>
             <div style={{fontSize:10,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>How to get best results</div>
             {[["YouTube ✓","Paste the link — audio is transcribed automatically"],["Instagram","Paste link + copy the caption from the post"],["TikTok","Paste link + copy the caption or describe the workout"],["No link","Just type or paste the workout directly below"]].map(([p,t])=>(
@@ -604,10 +608,6 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
               </div>
             ))}
           </div>
-          <button className="btn" onClick={analyzeWithAI} disabled={!canAnalyze}>⚡ Build Workout</button>
-          {isInstagramOrTikTok&&!importCaption.trim()&&(
-            <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add a description above to enable analysis</div>
-          )}
         </div>
       )
     );
