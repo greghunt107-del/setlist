@@ -1,0 +1,37 @@
+{
+  "name": "SetList",
+  "surfaces": {
+    "bg": "#FFFFFF",
+    "deep": "#F7F8FA",
+    "surface": "#F2F3F6",
+    "card": "#FFFFFF",
+    "tag": "#F2F5FA"
+  },
+  "borders": {
+    "border": "#E3E5EA",
+    "borderHi": "#C6CBD6"
+  },
+  "text": {
+    "text": "#0A0B0E",
+    "muted": "#8A8D96",
+    "mutedHi": "#5F626B",
+    "accentDim": "#4A4D55"
+  },
+  "accent": {
+    "blue": "#1A5FBF",
+    "blueBright": "#2A7FEF",
+    "blueGlow": "#1A5FBF14",
+    "note": "Blue is the ONLY accent color in the product. Reserved for the logo, links, one primary CTA per screen, and detected/active states. Never decorative."
+  },
+  "semantic": {
+    "green": "#17A863",
+    "red": "#E04545",
+    "gold": "#B8860B",
+    "note": "Used only to mean something (success/done, destructive, PR/badge) — never as decoration."
+  },
+  "typography": {
+    "display": { "family": "Big Shoulders Display", "weights": [700, 800], "role": "Headings, CTAs, stat numbers, logo" },
+    "body": { "family": "Manrope", "weights": [400, 500, 700], "role": "Body copy, inputs, descriptions" },
+    "mono": { "family": "DM Mono", "weights": [500], "role": "Timers, counts, timestamps, weights/reps" }
+  }
+}

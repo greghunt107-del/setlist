@@ -1,0 +1,43 @@
+/* SetList design tokens — mirrors the `C` palette and STYLES in src/App.jsx.
+   Keep this in sync manually if the app's palette changes. */
+
+:root {
+  /* Surfaces */
+  --sl-bg: #FFFFFF;
+  --sl-deep: #F7F8FA;
+  --sl-surface: #F2F3F6;
+  --sl-card: #FFFFFF;
+  --sl-tag: #F2F5FA;
+
+  /* Borders */
+  --sl-border: #E3E5EA;
+  --sl-border-hi: #C6CBD6;
+
+  /* Text */
+  --sl-text: #0A0B0E;
+  --sl-muted: #8A8D96;
+  --sl-muted-hi: #5F626B;
+  --sl-accent-dim: #4A4D55;
+
+  /* Accent — blue is the ONLY accent color. Reserved for the logo,
+     links, one primary CTA per screen, and "detected/active" states.
+     Never used decoratively. */
+  --sl-blue: #1A5FBF;
+  --sl-blue-bright: #2A7FEF;
+  --sl-blue-glow: #1A5FBF14; /* ~8% alpha, used for active-state washes */
+
+  /* Semantic only — never decorative */
+  --sl-green: #17A863;
+  --sl-red: #E04545;
+  --sl-gold: #B8860B;
+
+  /* Typography */
+  --sl-font-display: 'Big Shoulders Display', sans-serif; /* headings, CTAs, stat numbers — weight 700/800 only */
+  --sl-font-body: 'Manrope', sans-serif;                  /* all body copy, inputs — weight 400/500/700 */
+  --sl-font-mono: 'DM Mono', monospace;                   /* timers, counts, timestamps, weights/reps */
+
+  /* Shape */
+  --sl-radius-card: 20px;
+  --sl-radius-control: 13px;
+  --sl-radius-pill: 20px;
+}
