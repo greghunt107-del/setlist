@@ -258,6 +258,7 @@ function finalizeWorkout(textOut, merged, url, platform) {
     source: platform,
     notes: merged.notes,
     videoId,
+    thumbnailUrl: textOut?.thumbnailUrl ?? null,
     exerciseList: merged.exercises.map(ex => {
       const timestamp = (durationSec && ex.timestamp > durationSec) ? Math.max(0, durationSec - 5) : ex.timestamp;
       return {
@@ -388,8 +389,35 @@ export async function runTextPipeline({ url, caption }, metrics) {
       else if (url.includes('tiktok.com')) platform = 'TikTok';
     }
 
-    // ── YouTube: fetch all metadata ─────────────────────────────────────────
+    // ── TikTok: caption + creator via the public oEmbed endpoint ────────────
+    // No auth, no scraping — TikTok's documented oEmbed returns the caption
+    // ("title"), the creator (@handle in author_url), and a thumbnail from
+    // just the post URL. Gemini's video ingestion is YouTube-only, so TikTok
+    // extraction is caption-first through this pipeline.
     let channelTitle = '';
+    let thumbnailUrl = null;
+    if (platform === 'TikTok') {
+      try {
+        const oeRes = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
+        if (oeRes.ok) {
+          const oe = await oeRes.json();
+          // TikTok's "title" IS the caption — treat it as the workout description
+          videoDescription = stripLoneSurrogates(oe.title || '');
+          const handleMatch = (oe.author_url || '').match(/@[\w.]+/);
+          channelTitle = handleMatch ? handleMatch[0] : stripLoneSurrogates(oe.author_name || '');
+          // Note: TikTok CDN thumbnail URLs expire after a while — good enough
+          // for the card right after import; a durable copy is a Phase 2 job.
+          thumbnailUrl = oe.thumbnail_url || null;
+          console.log(`TikTok oEmbed: creator=${channelTitle}, caption ${videoDescription.length} chars`);
+        } else {
+          console.log(`TikTok oEmbed failed: HTTP ${oeRes.status}`);
+        }
+      } catch (e) {
+        console.log('TikTok oEmbed failed:', e.message);
+      }
+    }
+
+    // ── YouTube: fetch all metadata ─────────────────────────────────────────
     if (platform === 'YouTube') {
       videoId = extractYouTubeVideoId(url);
 
@@ -556,6 +584,7 @@ EXTRACTION RULES:
     // let creator attribution end up empty if the model missed the rule.
     parsed.channelTitle = channelTitle || null;
     parsed.influencer = parsed.influencer || channelTitle || '';
+    parsed.thumbnailUrl = thumbnailUrl;
 
     // ── Post-process: lock in best timestamps ───────────────────────────────
     if (parsed.exerciseList?.length > 0) {

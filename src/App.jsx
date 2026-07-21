@@ -543,8 +543,8 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           <div className="empty"><div className="empty-icon">🔍</div><div className="etitle">No Results</div><div className="esub">Try a different search term.</div></div>
         ):filtered.map((w,i)=>(
           <div key={w.id} className={`wcard ${i===0&&!search?"feat":""}`} onClick={()=>{setSelectedWorkout(w);setTab("detail");}}>
-            <div className="wthumb" style={(w.videoId||w.youtubeId)?{backgroundImage:`url(https://img.youtube.com/vi/${w.videoId||w.youtubeId}/hqdefault.jpg)`,backgroundSize:"cover",backgroundPosition:"center"}:{}}>
-              {!(w.videoId||w.youtubeId)&&<span className="thmoji">{w.emoji}</span>}
+            <div className="wthumb" style={(w.videoId||w.youtubeId)?{backgroundImage:`url(https://img.youtube.com/vi/${w.videoId||w.youtubeId}/hqdefault.jpg)`,backgroundSize:"cover",backgroundPosition:"center"}:w.thumbnailUrl?{backgroundImage:`url(${w.thumbnailUrl})`,backgroundSize:"cover",backgroundPosition:"center"}:{}}>
+              {!(w.videoId||w.youtubeId||w.thumbnailUrl)&&<span className="thmoji">{w.emoji}</span>}
               <span className="cbadge">{w.tag}</span>
               <span className="csrc">{w.isOwn?"✦ Mine":w.influencer||w.source}</span>
             </div>
@@ -564,8 +564,11 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
   };
 
   const ImportScreen=()=>{
-    const isInstagramOrTikTok = importUrl && (importUrl.includes("instagram.com") || importUrl.includes("tiktok.com"));
-    const canAnalyze = (importUrl || importCaption) && (!isInstagramOrTikTok || importCaption.trim().length > 0);
+    // TikTok captions are auto-fetched server-side (oEmbed), so only
+    // Instagram still requires a pasted caption to analyze.
+    const isInstagram = importUrl && importUrl.includes("instagram.com");
+    const isTikTok = importUrl && importUrl.includes("tiktok.com");
+    const canAnalyze = (importUrl || importCaption) && (!isInstagram || importCaption.trim().length > 0);
     return(
       loading?(
         <div className="con">
@@ -584,24 +587,29 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           <div>
             <div className="flbl">Post URL <span style={{color:C.muted,fontWeight:400,textTransform:"none",letterSpacing:0}}>(YouTube, Instagram, TikTok)</span></div>
             <input className="tinput" placeholder="https://www.youtube.com/watch?v=..." value={importUrl} onChange={e=>setImportUrl(e.target.value)} autoComplete="off"/>
-            {isInstagramOrTikTok&&(
+            {isInstagram&&(
               <div style={{marginTop:7,background:`${C.gold}18`,border:`1px solid ${C.gold}44`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.gold,lineHeight:1.5}}>
-                📋 Instagram and TikTok links need a description for accurate results. Paste the caption below.
+                📋 Instagram links need a description for accurate results. Paste the caption below.
+              </div>
+            )}
+            {isTikTok&&(
+              <div style={{marginTop:7,background:`${C.blue}18`,border:`1px solid ${C.borderHi}`,borderRadius:10,padding:"8px 12px",fontSize:11,color:C.blueBright,lineHeight:1.5}}>
+                ✓ TikTok caption is fetched automatically. If it doesn't list the exercises, paste them below for accurate results.
               </div>
             )}
           </div>
           <div>
             <div className="flbl">Workout Description <span style={{color:C.blueBright,fontWeight:700,textTransform:"none",letterSpacing:0}}>← paste caption for best results</span></div>
             <textarea className="tinput" rows={5} placeholder={`Paste the caption, description, or type the workout yourself.\n\nExample:\n4x12 Kettlebell Swings\n3x10 Goblet Squats\n3x15 Romanian Deadlifts`} value={importCaption} onChange={e=>setImportCaption(e.target.value)}/>
-            <div style={{fontSize:10,color:C.muted,marginTop:5}}>💡 YouTube links auto-transcribe. For Instagram/TikTok paste the caption.</div>
+            <div style={{fontSize:10,color:C.muted,marginTop:5}}>💡 YouTube and TikTok fetch automatically. For Instagram paste the caption.</div>
           </div>
           <button className="btn" onClick={analyzeWithAI} disabled={!canAnalyze}>⚡ Build Workout</button>
-          {isInstagramOrTikTok&&!importCaption.trim()&&(
+          {isInstagram&&!importCaption.trim()&&(
             <div style={{textAlign:"center",fontSize:11,color:C.muted}}>Add a description above to enable analysis</div>
           )}
           <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:13,padding:"11px 14px"}}>
             <div style={{fontSize:10,fontWeight:700,color:C.muted,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>How to get best results</div>
-            {[["YouTube ✓","Paste the link — audio is transcribed automatically"],["Instagram","Paste link + copy the caption from the post"],["TikTok","Paste link + copy the caption or describe the workout"],["No link","Just type or paste the workout directly below"]].map(([p,t])=>(
+            {[["YouTube ✓","Paste the link — audio is transcribed automatically"],["TikTok ✓","Paste the link — caption is fetched automatically"],["Instagram","Paste link + copy the caption from the post"],["No link","Just type or paste the workout directly below"]].map(([p,t])=>(
               <div key={p} style={{display:"flex",gap:9,marginBottom:6,fontSize:12,lineHeight:1.4}}>
                 <span style={{fontWeight:700,color:C.blueBright,minWidth:80,fontSize:11}}>{p}</span>
                 <span style={{color:C.accentDim}}>{t}</span>
