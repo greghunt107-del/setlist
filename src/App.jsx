@@ -815,7 +815,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
                     <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
                   </div>
                   <div className="set-rows">
-                    <div style={{display:"grid",gridTemplateColumns:"28px 1fr 1fr 1fr 36px",gap:8,paddingBottom:4}}>
+                    <div style={{display:"grid",gridTemplateColumns:"28px 1fr 1fr 1fr 36px",gap:8,padding:"0 12px 4px"}}>
                       {["Set","Reps","Weight","Time","Done"].map((l,i)=><div key={i} className="set-col-lbl">{l}</div>)}
                     </div>
                     {ex.sets.map((s,si)=>(
