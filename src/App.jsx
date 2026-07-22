@@ -260,6 +260,33 @@ const getMG = n => { for(const[g,ex] of Object.entries(MG)) if(ex.includes(n)) r
 const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 const fmtDate = d => new Date(d).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
 
+// Uploaded clips have no platform to pull a thumbnail from (unlike YouTube/TikTok),
+// so grab one ourselves: decode a frame client-side via <video>+<canvas> and
+// return it as a data URL. Runs entirely in-browser, no upload/round-trip needed.
+const captureVideoThumbnail = file => new Promise(resolve => {
+  const video = document.createElement("video");
+  video.preload = "metadata";
+  video.muted = true;
+  video.playsInline = true;
+  const objectUrl = URL.createObjectURL(file);
+  video.src = objectUrl;
+  const cleanup = result => { URL.revokeObjectURL(objectUrl); resolve(result); };
+  const timeout = setTimeout(() => cleanup(null), 6000);
+  video.onloadedmetadata = () => { video.currentTime = Math.min(1, (video.duration||2)/2); };
+  video.onseeked = () => {
+    clearTimeout(timeout);
+    try {
+      const scale = Math.min(1, 480/video.videoWidth);
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth*scale;
+      canvas.height = video.videoHeight*scale;
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+      cleanup(canvas.toDataURL("image/jpeg", 0.7));
+    } catch { cleanup(null); }
+  };
+  video.onerror = () => { clearTimeout(timeout); cleanup(null); };
+});
+
 const YT_FALLBACKS = {
   "Jump Squats":"Hvj5Jdwu2KY","Burpees":"dZgVxmf6jkA","High Knees":"ZZZoCNMU48U","Mountain Climbers":"nmwgirgXLYM","Lateral Jumps":"k3AkFPYe_dA","Plank Jacks":"5GKg9JTBQME","Tuck Jumps":"rkrIAOoJBxM","Sprint in Place":"fuFMkMeB47g",
   "Hip Thrusts":"xn5XiRhJNmU","Romanian Deadlifts":"JCXUYuzwNrM","Glute Bridges":"OUgsJ8-Vi0E","Sumo Squats":"YUbgHfkk6KY","Donkey Kicks":"SJ1Xuz9D-8Q","Fire Hydrants":"la7AduHtYkw",
@@ -340,11 +367,12 @@ const ExerciseVideoDrawer = ({ exercise, open }) => {
 
 const VideoOverlay = ({ exercise, onClose }) => {
   const isSourceVideo = exercise.demoMode === "source_video" && exercise.sourceVideoId;
+  const isUploadedVideo = exercise.demoMode === "uploaded_video" && exercise.sourceBlobUrl;
   const { videoId, loading, fetch } = useExerciseVideo(exercise.name);
-  useEffect(() => { if (!isSourceVideo) fetch(); }, []);
+  useEffect(() => { if (!isSourceVideo && !isUploadedVideo) fetch(); }, []);
   const embedSrc = isSourceVideo
     ? `https://www.youtube.com/embed/${exercise.sourceVideoId}?start=${exercise.startSec||0}&autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`
-    : videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1` : null;
+    : (!isUploadedVideo && videoId) ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1` : null;
   return (
     <div className="vid-overlay">
       <div className="vid-overlay-hdr">
@@ -352,7 +380,16 @@ const VideoOverlay = ({ exercise, onClose }) => {
         <div className="vid-overlay-title">{exercise.name}</div>
       </div>
       <div className="vid-overlay-body">
-        {(loading && !isSourceVideo) ? (
+        {isUploadedVideo ? (
+          <div className="vid-overlay-player">
+            <video
+              src={`/api/video-proxy?url=${encodeURIComponent(exercise.sourceBlobUrl)}`}
+              controls autoPlay muted playsInline
+              onLoadedMetadata={e=>{e.currentTarget.currentTime=exercise.startSec||0;}}
+              style={{width:"100%",height:"100%"}}
+            />
+          </div>
+        ) : (loading && !isSourceVideo) ? (
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:200,gap:12,color:C.muted}}>
             <div className="wl">{[1,2,3,4,5].map(i=><div key={i} className="wb"/>)}</div>
             <div style={{fontSize:12}}>Finding demo...</div>
@@ -375,7 +412,7 @@ const VideoOverlay = ({ exercise, onClose }) => {
             <span className="vid-key-pill">⏸ Rest {exercise.rest||"60s"}</span>
           </div>
           {exercise.notes&&<div className="vid-overlay-notes" style={{marginTop:10}}>{exercise.notes}</div>}
-          {isSourceVideo&&<div style={{fontSize:10,color:C.muted,marginTop:8}}>▶ Jumping to {Math.floor((exercise.startSec||0)/60)}:{String((exercise.startSec||0)%60).padStart(2,"0")} in original video</div>}
+          {(isSourceVideo||isUploadedVideo)&&<div style={{fontSize:10,color:C.muted,marginTop:8}}>▶ Jumping to {Math.floor((exercise.startSec||0)/60)}:{String((exercise.startSec||0)%60).padStart(2,"0")} in original video</div>}
         </div>
         <button className="btn ghost" onClick={onClose}>← Back to Workout</button>
       </div>
@@ -466,13 +503,16 @@ export default function App() {
     setLoading(true);
     try{
       let body;
+      let uploadedBlobUrl=null, uploadedThumbnail=null;
       if(uploadFile){
+        uploadedThumbnail = await captureVideoThumbnail(uploadFile);
         setUploadProgress(0);
         const blob = await upload(uploadFile.name, uploadFile, {
           access:"private",
           handleUploadUrl:"/api/upload",
           onUploadProgress:(p)=>setUploadProgress(p.percentage),
         });
+        uploadedBlobUrl = blob.url;
         setUploadProgress(null);
         body = {blobUrl:blob.url, caption:importCaption, creatorHandle:uploadCreatorHandle.trim()};
       } else {
@@ -490,7 +530,10 @@ export default function App() {
       }
       const workoutVideoId = parsed.videoId||null;
 const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId,youtubeId:workoutVideoId,
-  exerciseList:parsed.exerciseList?.map(ex=>({...ex,sourceVideoId:workoutVideoId,demoMode:workoutVideoId?"source_video":(ex.demoMode||"generic_demo")}))};
+  thumbnailUrl:uploadedThumbnail||parsed.thumbnailUrl||null,
+  exerciseList:parsed.exerciseList?.map(ex=>({...ex,sourceVideoId:workoutVideoId,
+    sourceBlobUrl:uploadedBlobUrl||undefined,
+    demoMode:uploadedBlobUrl?"uploaded_video":(workoutVideoId?"source_video":(ex.demoMode||"generic_demo"))}))};
       setImportUrl("");setImportCaption("");setUploadFile(null);setUploadCreatorHandle("");setLoading(false);
       setPendingWorkout(nw);setTab("review");
     }catch(e){console.error("Analysis error:",e);setLoading(false);setUploadProgress(null);showToast("Analysis failed — try again");}
@@ -724,6 +767,11 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
           <div className="videoarea">
             <iframe src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`} allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"/>
           </div>
+        ) : w.thumbnailUrl ? (
+          <div className="videoarea" style={{backgroundImage:`url(${w.thumbnailUrl})`,backgroundSize:"cover",backgroundPosition:"center"}}>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,#000000AA,transparent 55%)"}}/>
+            <span style={{fontSize:12,color:"#fff",fontWeight:700,position:"relative"}}>{w.influencer||w.source}</span>
+          </div>
         ) : (
           <div className="videoarea">
             <span style={{fontSize:50}}>{w.emoji}</span>
@@ -758,7 +806,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
                   </div>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
                     {analytics.prByExercise[ex.name]&&<div style={{fontSize:10,color:C.gold,fontWeight:700}}>PR {analytics.prByExercise[ex.name]}lb</div>}
-<div className="ex-vid-btn" onClick={e=>{e.preventDefault();e.stopPropagation();setVideoOverlay({name:ex.name,sets:ex.sets||"3",reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||"",demoMode:ex.demoMode,startSec:ex.startSec,sourceVideoId:w.videoId||w.youtubeId});}}>
+<div className="ex-vid-btn" onClick={e=>{e.preventDefault();e.stopPropagation();setVideoOverlay({name:ex.name,sets:ex.sets||"3",reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||"",demoMode:ex.demoMode,startSec:ex.startSec,sourceVideoId:w.videoId||w.youtubeId,sourceBlobUrl:ex.sourceBlobUrl});}}>
                     ▶ Demo
                     </div>
                   </div>
@@ -809,7 +857,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
               </div>
               {open&&(
                 <>
-                  <div className="demo-btn" onClick={()=>{const srcWorkout=workouts.find(w=>w.id===activeWorkout.workoutId);setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||"",demoMode:ex.demoMode,startSec:ex.startSec,sourceVideoId:srcWorkout?.videoId||srcWorkout?.youtubeId});}}>
+                  <div className="demo-btn" onClick={()=>{const srcWorkout=workouts.find(w=>w.id===activeWorkout.workoutId);setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||"",demoMode:ex.demoMode,startSec:ex.startSec,sourceVideoId:srcWorkout?.videoId||srcWorkout?.youtubeId,sourceBlobUrl:ex.sourceBlobUrl});}}>
                     <div className="pulse"/>
                     <span>Watch demo · {ex.name}</span>
                     <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
@@ -1202,14 +1250,18 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
   };
 
 const renderMain=()=>{
-    if(showCompletion) return <CompletionScreen/>;
-    if(!onboarded) return <OnboardingScreen/>;
+    // Called as plain functions, not JSX (<X/>), on purpose: these are closures
+    // defined inside App's body, so a JSX invocation gets a fresh component
+    // "type" every render and React remounts the whole subtree -- which kills
+    // focus in any input inside it after every single keystroke.
+    if(showCompletion) return CompletionScreen();
+    if(!onboarded) return OnboardingScreen();
     if(tab==="active") return renderActiveWorkout();
-    if(tab==="detail") return <DetailScreen/>;
-    if(tab==="review") return <ReviewScreen/>;
-    if(tab==="import") return <ImportScreen/>;
-    if(tab==="library") return <LibraryScreen/>;
-    if(tab==="progress") return <ProgressScreen/>;
+    if(tab==="detail") return DetailScreen();
+    if(tab==="review") return ReviewScreen();
+    if(tab==="import") return ImportScreen();
+    if(tab==="library") return LibraryScreen();
+    if(tab==="progress") return ProgressScreen();
     return renderHome();
   };
 
@@ -1232,8 +1284,8 @@ const renderMain=()=>{
             ))}
           </div>
  )}
- {showFinishConfirm&&<FinishConfirmModal/>}
-        {showCreateEx&&<CreateExModal/>}
+ {showFinishConfirm&&FinishConfirmModal()}
+        {showCreateEx&&CreateExModal()}
         <div className={`toast ${toast.show?"show":""}`}>{toast.msg}</div>
       </div>
 {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}    </>
