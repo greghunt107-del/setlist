@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { upload } from "@vercel/blob/client";
+import { supabase } from "./lib/supabase";
+import { fetchProfile, fetchAll, insertWorkout, deleteWorkout, insertSession, insertOwnExercise, setProfileOnboarded, importLocalData } from "./lib/db";
 
 const YT_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+
+const safeParse = s => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
 
 const C = {
   bg:"#FFFFFF", deep:"#F7F8FA", surface:"#F2F3F6", card:"#FFFFFF",
@@ -424,8 +428,11 @@ export default function App() {
   const [tab, setTab] = useState("home");
   const [search, setSearch] = useState("");
   const [onboarded, setOnboarded] = useState(()=>{try{return localStorage.getItem("sl_onboarded")==="1";}catch{return false;}});
-  const [workouts, setWorkouts] = useState(()=>{try{const s=localStorage.getItem("sl_workouts");return s?JSON.parse(s):[];}catch{return[];}});
-  const [history, setHistory] = useState(()=>{try{const s=localStorage.getItem("sl_history");return s?JSON.parse(s):[];}catch{return[];}});
+  // Source of truth is Supabase now; these load from the account on sign-in (see the
+  // load effect below). They start empty rather than seeding from localStorage so the
+  // old sl_workouts/sl_history keys stay pristine as the one-time import source.
+  const [workouts, setWorkouts] = useState([]);
+  const [history, setHistory] = useState([]);
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [importUrl, setImportUrl] = useState("");
   const [importCaption, setImportCaption] = useState("");
@@ -463,22 +470,97 @@ export default function App() {
   // "rendered fewer hooks than expected" crash with no error boundary to catch it. Any
   // state a plain-function screen needs must live up here instead.
   const [onboardSlide, setOnboardSlide] = useState(0);
+  // Auth (Phase 2). session/authReady drive the sign-in gate; the rest is AuthScreen's
+  // form state -- lifted up here because AuthScreen is a plain-function closure too, so
+  // it must not declare its own hooks (see the lifted-state note above).
+  const [session, setSession] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authSent, setAuthSent] = useState(false);
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authErr, setAuthErr] = useState("");
+  const [needsImport, setNeedsImport] = useState(false);
+  const [importBusy, setImportBusy] = useState(false);
   const timerRef = useRef(null);
   const fileRef = useRef();
   const videoRef = useRef();
 
   useEffect(()=>{if(showCompletion&&window.navigator.vibrate)window.navigator.vibrate([100,50,100]);},[showCompletion]);
 
+  // Load the current auth session and keep it in sync (sign-in / sign-out / token refresh).
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true);});
+    const {data:sub}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));
+    return ()=>sub.subscription.unsubscribe();
+  },[]);
+
   const library = [
     ...workouts.flatMap(w=>w.exerciseList.map(ex=>({...ex,workoutId:w.id,workoutTitle:w.title,influencer:w.influencer||w.source,muscleGroup:getMG(ex.name),isOwn:false}))),
     ...ownExercises.map(ex=>({...ex,workoutId:"own",workoutTitle:"My Exercises",influencer:"You",isOwn:true,sets:ex.defaultSets,reps:ex.defaultReps,weight:ex.defaultWeight})),
   ].filter((ex,i,arr)=>arr.findIndex(e=>e.name===ex.name&&e.workoutId===ex.workoutId)===i);
 
-  useEffect(()=>{try{localStorage.setItem("sl_workouts",JSON.stringify(workouts));}catch{}},[workouts]);
-  useEffect(()=>{try{localStorage.setItem("sl_history",JSON.stringify(history));}catch{}},[history]);
+  // (Removed the old localStorage write-through for sl_workouts/sl_history: those keys
+  // are now the read-only import source, and Supabase is the source of truth. A per-user
+  // offline read cache is a deferred follow-up.)
 
-  const completeOnboarding = ()=>{try{localStorage.setItem("sl_onboarded","1");}catch{}setOnboarded(true);};
+  const completeOnboarding = ()=>{
+    try{localStorage.setItem("sl_onboarded","1");}catch{}
+    setOnboarded(true);
+    if(session) setProfileOnboarded(session.user.id).catch(e=>console.error("onboard persist:",e));
+  };
+
+  const signInWithGoogle = async ()=>{
+    setAuthErr("");
+    const {error}=await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}});
+    if(error) setAuthErr(error.message);
+  };
+  const sendMagicLink = async ()=>{
+    const email=authEmail.trim();
+    if(!email){setAuthErr("Enter your email first.");return;}
+    setAuthBusy(true);setAuthErr("");
+    const {error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
+    setAuthBusy(false);
+    if(error) setAuthErr(error.message); else setAuthSent(true);
+  };
+  const signOut = async ()=>{await supabase.auth.signOut();};
   const showToast = msg=>{setToast({show:true,msg});setTimeout(()=>setToast({show:false,msg:""}),2200);};
+
+  // On sign-in: load the account's data from Supabase (source of truth), sync the
+  // onboarding flag from the profile, and flag a one-time import if this browser still
+  // holds pre-account workouts. On sign-out: clear in-memory data so nothing leaks.
+  useEffect(()=>{
+    if(!session){setWorkouts([]);setHistory([]);setOwnExercises([]);setNeedsImport(false);return;}
+    let cancelled=false;
+    (async()=>{
+      try{
+        const uid=session.user.id;
+        const prof=await fetchProfile(uid);
+        if(cancelled) return;
+        if(prof) setOnboarded(!!prof.onboarded);
+        const localW=safeParse(localStorage.getItem("sl_workouts"))||[];
+        const localH=safeParse(localStorage.getItem("sl_history"))||[];
+        if(prof&&!prof.migrated_local_at&&(localW.length||localH.length)) setNeedsImport(true);
+        const all=await fetchAll();
+        if(cancelled) return;
+        setWorkouts(all.workouts);setHistory(all.history);setOwnExercises(all.ownExercises);
+      }catch(e){if(!cancelled){console.error("Load error:",e);showToast("Couldn't load your data");}}
+    })();
+    return ()=>{cancelled=true;};
+  },[session]);
+
+  const runImport = async ()=>{
+    if(!session) return;
+    setImportBusy(true);
+    try{
+      const local={workouts:safeParse(localStorage.getItem("sl_workouts"))||[],history:safeParse(localStorage.getItem("sl_history"))||[]};
+      const res=await importLocalData(session.user.id,local);
+      const all=await fetchAll();
+      setWorkouts(all.workouts);setHistory(all.history);setOwnExercises(all.ownExercises);
+      setNeedsImport(false);
+      showToast(`Imported ${res.workouts} workout${res.workouts===1?"":"s"} 🔥`);
+    }catch(e){console.error("Import error:",e);showToast("Import failed — try again");}
+    setImportBusy(false);
+  };
 
   useEffect(()=>{
     if(activeWorkout){timerRef.current=setInterval(()=>setTimerSec(s=>s+1),1000);}
@@ -573,21 +655,33 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
     setActiveWorkout(prev=>{const ex=[...prev.exercises];ex[ei]={...ex[ei],sets:[...ex[ei].sets,{setNum:ex[ei].sets.length+1,reps:"",weight:"",time:"",done:false}]};return{...prev,exercises:ex};});
   };
 
-  const finishWorkout=()=>{
+  const finishWorkout=async ()=>{
     if(!activeWorkout) return;
     const vol=activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).reduce((b,s)=>{const r=parseFloat(s.reps)||0,w=parseFloat(s.weight)||1;return b+(r*w);},0),0);
-    const log={id:Date.now(),workoutId:activeWorkout.workoutId,workoutTitle:activeWorkout.workoutTitle,date:new Date().toISOString(),duration:timerSec,totalVolume:Math.round(vol),exercises:activeWorkout.exercises};
-    setHistory(p=>[log,...p]);
-    setShowCompletion({title:activeWorkout.workoutTitle,duration:timerSec,volume:Math.round(vol),sets:activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0),exercises:activeWorkout.exercises.length});
+    const roundVol=Math.round(vol);
+    const log={workoutId:activeWorkout.workoutId,workoutTitle:activeWorkout.workoutTitle,date:new Date().toISOString(),duration:timerSec,totalVolume:roundVol,exercises:activeWorkout.exercises};
+    const wid=typeof activeWorkout.workoutId==="string"?activeWorkout.workoutId:null; // uuid FK, or null for unlinked
+    setShowCompletion({title:activeWorkout.workoutTitle,duration:timerSec,volume:roundVol,sets:activeWorkout.exercises.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0),exercises:activeWorkout.exercises.length});
     setActiveWorkout(null);setVideoOverlay(null);
+    try{
+      const saved=await insertSession(log,session.user.id,wid);
+      setHistory(p=>[saved,...p]);
+    }catch(e){
+      console.error("Save session error:",e);
+      setHistory(p=>[{...log,id:Date.now()},...p]);
+      showToast("Saved locally — cloud sync failed");
+    }
   };
 
-  const saveOwnExercise=()=>{
+  const saveOwnExercise=async ()=>{
     if(!newEx.name.trim()) return;
-    setOwnExercises(p=>[...p,{...newEx,id:Date.now()}]);
-    showToast(`${newEx.name} saved ✓`);
-    setNewEx({name:"",muscleGroup:"Legs & Glutes",defaultSets:"3",defaultReps:"10",defaultWeight:"",notes:"",videoUrl:""});
-    setShowCreateEx(false);
+    try{
+      const saved=await insertOwnExercise(newEx,session.user.id);
+      setOwnExercises(p=>[...p,saved]);
+      showToast(`${newEx.name} saved ✓`);
+      setNewEx({name:"",muscleGroup:"Legs & Glutes",defaultSets:"3",defaultReps:"10",defaultWeight:"",notes:"",videoUrl:""});
+      setShowCreateEx(false);
+    }catch(e){console.error("Save exercise error:",e);showToast("Couldn't save — try again");}
   };
 
   const addToCustom=ex=>{
@@ -595,13 +689,16 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
     setCustomExercises(p=>[...p,ex]);showToast(`${ex.name} added ✓`);
   };
 
-  const saveCustomWorkout=()=>{
+  const saveCustomWorkout=async ()=>{
     if(!customExercises.length) return;
-    const w={id:Date.now(),title:customName||"My Custom Workout",tag:"Custom",emoji:"⚡",source:"Custom",duration:customExercises.length*4,level:"Custom",influencer:"You",isOwn:true,videoId:null,youtubeId:null,notes:"Custom workout built in SetList.",
+    const w={title:customName||"My Custom Workout",tag:"Custom",emoji:"⚡",source:"Custom",duration:customExercises.length*4,level:"Custom",influencer:"You",isOwn:true,videoId:null,youtubeId:null,notes:"Custom workout built in SetList.",
       exerciseList:customExercises.map(e=>({name:e.name,sets:e.sets||e.defaultSets||"3",reps:e.reps||e.defaultReps||"10",rest:"60s",weight:e.weight||e.defaultWeight||"",notes:e.notes||""}))};
-    setWorkouts(p=>[w,...p]);
-    setCustomName("");setCustomExercises([]);setBuilderMode(false);setShowPicker(false);
-    setSelectedWorkout(w);setTab("detail");showToast("Custom workout saved 🔥");
+    try{
+      const saved=await insertWorkout(w,session.user.id);
+      setWorkouts(p=>[saved,...p]);
+      setCustomName("");setCustomExercises([]);setBuilderMode(false);setShowPicker(false);
+      setSelectedWorkout(saved);setTab("detail");showToast("Custom workout saved 🔥");
+    }catch(e){console.error("Save workout error:",e);showToast("Couldn't save — try again");}
   };
 
   const analytics = {
@@ -830,7 +927,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
             <button className="btn ghost" onClick={()=>{setBuilderMode(true);setCustomExercises([...(w.exerciseList||[])]);setCustomName(`${w.title} (remix)`);setTab("library");}}>✦ Remix</button>
             <button className="btn ghost" onClick={()=>setTab("progress")}>📊 Progress</button>
           </div>
-          <button className="btn" style={{background:C.red}} onClick={()=>{if(window.confirm("Delete this workout?")){setWorkouts(p=>p.filter(x=>x.id!==w.id));setTab("home");}}}>🗑 Delete Workout</button>
+          <button className="btn" style={{background:C.red}} onClick={async()=>{if(window.confirm("Delete this workout?")){try{await deleteWorkout(w.id);setWorkouts(p=>p.filter(x=>x.id!==w.id));setTab("home");}catch(e){console.error("Delete error:",e);showToast("Couldn't delete — try again");}}}}>🗑 Delete Workout</button>
         </div>
       </div>
     );
@@ -1072,6 +1169,10 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
             </div>
           </div>
         ))}
+        <div style={{marginTop:24,paddingTop:16,borderTop:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+          <div style={{fontSize:12,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{session?.user?.email}</div>
+          <button className="btn ghost" style={{width:"auto",padding:"9px 16px",fontSize:12}} onClick={signOut}>Sign out</button>
+        </div>
       </div>
     );
   };
@@ -1088,6 +1189,18 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
     </div>
   </div>
 );
+
+  const ImportPromptModal=()=>(
+    <div className="modal-bg">
+      <div className="modal" style={{textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>📥</div>
+        <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:20,fontWeight:800,marginBottom:6,color:C.text}}>Import your workouts?</div>
+        <div style={{fontSize:13,color:C.muted,lineHeight:1.6,marginBottom:18}}>We found workouts saved on this device from before you had an account. Bring them in so they sync everywhere.</div>
+        <button className="btn" onClick={runImport} disabled={importBusy} style={{marginBottom:8}}>{importBusy?"Importing…":"Import to my account"}</button>
+        <button className="btn ghost" onClick={()=>setNeedsImport(false)} disabled={importBusy}>Not now</button>
+      </div>
+    </div>
+  );
 
   const CreateExModal=()=>(
     <div className="modal-bg" onClick={e=>{if(e.target===e.currentTarget)setShowCreateEx(false);}}>
@@ -1111,6 +1224,34 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
         <div><div className="flbl">Video Reference URL (YouTube)</div><input className="tinput" placeholder="https://youtube.com/..." value={newEx.videoUrl} onChange={e=>setNewEx(p=>({...p,videoUrl:e.target.value}))}/></div>
         <button className="btn" onClick={saveOwnExercise} disabled={!newEx.name.trim()}>Save to Library</button>
       </div>
+    </div>
+  );
+
+  const AuthScreen=()=>(
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"48px 28px",textAlign:"center",background:C.bg,gap:30}}>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+        <div className="logo" style={{fontSize:40}}>Set<em>List</em></div>
+        <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:24,fontWeight:800,color:C.text}}>Save every workout</div>
+        <div style={{fontSize:14,color:C.muted,lineHeight:1.6,maxWidth:300}}>Sign in to sync your library, history, and streaks across every device.</div>
+      </div>
+      {authSent ? (
+        <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+          <div style={{fontSize:44}}>📬</div>
+          <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:18,fontWeight:700,color:C.text}}>Check your email</div>
+          <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>We sent a sign-in link to<br/><b style={{color:C.text}}>{authEmail.trim()}</b>. Open it on this device.</div>
+          <button className="btn ghost" style={{marginTop:6}} onClick={()=>{setAuthSent(false);setAuthErr("");}}>Use a different email</button>
+        </div>
+      ) : (
+        <div style={{width:"100%",display:"flex",flexDirection:"column",gap:12}}>
+          <button className="btn" onClick={signInWithGoogle}>Continue with Google</button>
+          <div style={{display:"flex",alignItems:"center",gap:10,color:C.muted,fontSize:12,margin:"2px 0"}}>
+            <div style={{flex:1,height:1,background:C.border}}/>or<div style={{flex:1,height:1,background:C.border}}/>
+          </div>
+          <input className="tinput" type="email" inputMode="email" autoComplete="email" placeholder="you@email.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)}/>
+          <button className="btn ghost" onClick={sendMagicLink} disabled={authBusy}>{authBusy?"Sending…":"Email me a magic link"}</button>
+          {authErr&&<div style={{fontSize:12,color:C.red,marginTop:2}}>{authErr}</div>}
+        </div>
+      )}
     </div>
   );
 
@@ -1152,12 +1293,15 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
     const updateExercise=(i,field,val)=>setDraft(p=>({...p,exerciseList:p.exerciseList.map((ex,j)=>j===i?{...ex,[field]:val}:ex)}));
     const removeExercise=i=>setDraft(p=>({...p,exerciseList:p.exerciseList.filter((_,j)=>j!==i)}));
     const addExercise=()=>setDraft(p=>({...p,exerciseList:[...p.exerciseList,{name:"New Exercise",sets:"3",reps:"10",rest:"60s",weight:"",notes:""}]}));
-    const saveWorkout=()=>{
-      setWorkouts(p=>[draft,...p]);
-      setPendingWorkout(null);
-      setSelectedWorkout(draft);
-      setTab("detail");
-      showToast("Workout saved ✓");
+    const saveWorkout=async ()=>{
+      try{
+        const saved=await insertWorkout(draft,session.user.id);
+        setWorkouts(p=>[saved,...p]);
+        setPendingWorkout(null);
+        setSelectedWorkout(saved);
+        setTab("detail");
+        showToast("Workout saved ✓");
+      }catch(e){console.error("Save workout error:",e);showToast("Couldn't save — try again");}
     };
 
     return(
@@ -1263,6 +1407,8 @@ const renderMain=()=>{
     // defined inside App's body, so a JSX invocation gets a fresh component
     // "type" every render and React remounts the whole subtree -- which kills
     // focus in any input inside it after every single keystroke.
+    if(!authReady) return <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:C.mutedHi,fontFamily:"'Big Shoulders Display',sans-serif",fontSize:20,letterSpacing:".5px"}}>SetList</div>;
+    if(!session) return AuthScreen();
     if(showCompletion) return CompletionScreen();
     if(!onboarded) return OnboardingScreen();
     if(tab==="active") return renderActiveWorkout();
@@ -1278,13 +1424,13 @@ const renderMain=()=>{
     <>
       <style>{STYLES}</style>
       <div className="app">
-        {tab!=="detail"&&tab!=="active"&&(
+        {session&&tab!=="detail"&&tab!=="active"&&(
           <div className="hdr">
             <div className="logo">Set<em>List</em></div>
           </div>
         )}
         {renderMain()}
-        {tab!=="active"&&(
+        {session&&tab!=="active"&&(
           <div className="nav">
             {[{id:"home",icon:"🏠",label:"Home"},{id:"import",icon:"＋",label:"Import"},{id:"library",icon:"📚",label:"Library"},{id:"progress",icon:"📊",label:"Progress"}].map(n=>(
               <div key={n.id} className={`ni ${tab===n.id?"on":""}`} onClick={()=>{setBuilderMode(false);setShowPicker(false);setVideoOverlay(null);setTab(n.id);}}>
@@ -1295,6 +1441,7 @@ const renderMain=()=>{
  )}
  {showFinishConfirm&&FinishConfirmModal()}
         {showCreateEx&&CreateExModal()}
+        {session&&onboarded&&needsImport&&ImportPromptModal()}
         <div className={`toast ${toast.show?"show":""}`}>{toast.msg}</div>
       </div>
 {videoOverlay&&<VideoOverlay exercise={videoOverlay} onClose={()=>setVideoOverlay(null)}/>}    </>
