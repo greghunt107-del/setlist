@@ -455,9 +455,19 @@ export default function App() {
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [pendingWorkout, setPendingWorkout] = useState(null);
   const [openVideos, setOpenVideos] = useState({});
+  // Lifted from OnboardingScreen/ReviewScreen/CompletionScreen -- those are called as
+  // plain functions (XScreen()), not JSX (<XScreen/>), so React never gives them their
+  // own hook list. Any useState/useEffect declared inside one of those closures gets
+  // appended to *App's* hook list only on renders where that screen is active, which
+  // changes the hook count between renders the moment the active tab changes -- a fatal
+  // "rendered fewer hooks than expected" crash with no error boundary to catch it. Any
+  // state a plain-function screen needs must live up here instead.
+  const [onboardSlide, setOnboardSlide] = useState(0);
   const timerRef = useRef(null);
   const fileRef = useRef();
   const videoRef = useRef();
+
+  useEffect(()=>{if(showCompletion&&window.navigator.vibrate)window.navigator.vibrate([100,50,100]);},[showCompletion]);
 
   const library = [
     ...workouts.flatMap(w=>w.exerciseList.map(ex=>({...ex,workoutId:w.id,workoutTitle:w.title,influencer:w.influencer||w.source,muscleGroup:getMG(ex.name),isOwn:false}))),
@@ -1105,7 +1115,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
   );
 
   const OnboardingScreen=()=>{
-    const [slide,setSlide]=useState(0);
+    const slide=onboardSlide, setSlide=setOnboardSlide;
     const slides=[
       {emoji:"🏋️",title:"Welcome to SetList",sub:"Your personal workout library.\nImport any workout from YouTube,\nInstagram, or TikTok in seconds."},
       {emoji:"⚡",title:"How It Works",sub:"Paste a link from YouTube, TikTok,\nor Instagram and our AI finds\nevery exercise automatically."},
@@ -1135,7 +1145,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
   };
 
   const ReviewScreen=()=>{
-    const [draft, setDraft] = useState(pendingWorkout);
+    const draft=pendingWorkout, setDraft=setPendingWorkout;
     if(!draft) return null;
 
     const updateField=(field,val)=>setDraft(p=>({...p,[field]:val}));
@@ -1218,8 +1228,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
   };
   const CompletionScreen=()=>{
     const c=showCompletion;
-    const [dots]=useState(()=>Array.from({length:40},(_,i)=>({id:i,x:Math.random()*100,delay:Math.random()*0.8,dur:1.2+Math.random()*1.2,color:["#2A8FEF","#22C97A","#F5C842","#FF5A5A","#A855F7"][Math.floor(Math.random()*5)],size:4+Math.random()*8})));
-    useEffect(()=>{if(window.navigator.vibrate)window.navigator.vibrate([100,50,100]);},[]);
+    const dots=Array.from({length:40},(_,i)=>({id:i,x:Math.random()*100,delay:Math.random()*0.8,dur:1.2+Math.random()*1.2,color:["#2A8FEF","#22C97A","#F5C842","#FF5A5A","#A855F7"][Math.floor(Math.random()*5)],size:4+Math.random()*8}));
     return(
       <div style={{position:"fixed",inset:0,background:C.bg,zIndex:300,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",padding:"80px 28px 60px",textAlign:"center",overflow:"hidden"}}>
         <style>{`@keyframes confetti{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}@keyframes popIn{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}`}</style>
