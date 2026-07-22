@@ -71,7 +71,7 @@ select.tinput{appearance:none;cursor:pointer}
 .btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
 .btn.ghost{background:${C.card};color:${C.text};border:1.5px solid ${C.border}}
 .btn.ghost:active{border-color:${C.borderHi}}
-.btn.grn{background:${C.green};color:#000}
+.btn.grn{background:${C.green};color:${C.text}}
 .btn.sm{padding:9px 14px;font-size:12px;border-radius:10px;width:auto}
 .row2{display:flex;gap:9px}
 .row2>.btn{flex:1}
@@ -737,7 +737,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
         </div>
         {w.notes&&<div className="notesbox"><div className="noteslbl">Coach Notes</div>{w.notes}</div>}
         <div style={{padding:"0 15px 15px"}}>
-          <button className="btn" onClick={()=>startWorkout(w)}>▶ Start Workout</button>
+          <button className="btn" onClick={()=>startWorkout(w)}>Start workout</button>
         </div>
         <div style={{padding:"0 15px 9px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div className="sh" style={{margin:0}}>Exercises</div>
@@ -792,7 +792,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
       </div>
       <div style={{padding:"10px 15px 0",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <span style={{fontSize:11,color:C.muted,fontWeight:600}}>{doneSets}/{totalSets} sets · {pct}%</span>
-        <span style={{fontSize:11,color:C.blueBright,fontWeight:700,cursor:"pointer"}} onClick={finishWorkout}>Finish ✓</span>
+        <span style={{fontSize:11,color:C.blueBright,fontWeight:700,cursor:"pointer"}} onClick={finishWorkout}>Finish</span>
       </div>
       <div className="prog-bar-bg" style={{flexShrink:0}}><div className="prog-bar" style={{width:`${pct}%`}}/></div>
       <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",paddingBottom:20}}>
@@ -811,7 +811,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
                 <>
                   <div className="demo-btn" onClick={()=>{const srcWorkout=workouts.find(w=>w.id===activeWorkout.workoutId);setVideoOverlay({name:ex.name,sets:String(ex.sets?.length||3),reps:ex.reps||"",rest:ex.rest||"60s",weight:ex.weight||"",notes:ex.notes||"",demoMode:ex.demoMode,startSec:ex.startSec,sourceVideoId:srcWorkout?.videoId||srcWorkout?.youtubeId});}}>
                     <div className="pulse"/>
-                    <span>Watch Demo · {ex.name}</span>
+                    <span>Watch demo · {ex.name}</span>
                     <span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Full screen →</span>
                   </div>
                   <div className="set-rows">
@@ -827,7 +827,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
                         <div className={`set-check ${s.done?"done":""}`} onClick={()=>toggleSetDone(ei,si)}>{s.done?"✓":"○"}</div>
                       </div>
                     ))}
-                    <div className="addset-btn" onClick={()=>addSet(ei)}>+ Add Set</div>
+                    <div className="addset-btn" onClick={()=>addSet(ei)}>+ Add set</div>
                   </div>
                 </>
               )}
@@ -836,7 +836,7 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
         })}
       </div>
       <div style={{padding:"10px 15px 20px",flexShrink:0,background:C.bg,borderTop:`1px solid ${C.border}`}}>
-        <button className="btn grn" onClick={()=>setShowFinishConfirm(true)}>✓ Finish & Log Workout</button>
+        <button className="btn grn" onClick={()=>setShowFinishConfirm(true)}>Finish & log workout</button>
       </div>
     </div>
   );
@@ -1022,12 +1022,11 @@ const nw={id:Date.now(),emoji:"✨",isOwn:false,...parsed,videoId:workoutVideoId
   <div className="modal-bg" onClick={()=>setShowFinishConfirm(false)}>
     <div className="confirm-modal" onClick={e=>e.stopPropagation()}>
       <div style={{textAlign:"center"}}>
-        <div style={{fontSize:36,marginBottom:12}}>🏁</div>
-        <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:20,fontWeight:800,marginBottom:8}}>Finish Workout?</div>
+        <div style={{fontFamily:"'Big Shoulders Display',sans-serif",fontSize:20,fontWeight:800,marginBottom:8}}>Finish workout?</div>
         <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Are you sure you want to finish and log this workout?</div>
       </div>
-      <button className="btn grn" onClick={()=>{setShowFinishConfirm(false);finishWorkout();}}>✓ Yes, Finish & Log</button>
-      <button className="btn ghost" onClick={()=>setShowFinishConfirm(false)}>← Keep Going</button>
+      <button className="btn grn" onClick={()=>{setShowFinishConfirm(false);finishWorkout();}}>Yes, finish & log</button>
+      <button className="btn ghost" onClick={()=>setShowFinishConfirm(false)}>Keep going</button>
     </div>
   </div>
 );
