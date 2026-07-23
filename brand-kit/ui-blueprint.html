@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SetList — UI Blueprint</title>
+<style>
+@page{margin:13mm}
+html,body{background:#fff;margin:0}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@media print{
+.secnav{display:none!important}
+.toast-live{display:none!important}
+.panel,.screen,.swatch,.idea,.canvas,.type-row,.flow-tier,.type-tag,.node{break-inside:avoid}
+section{padding-top:26px!important;padding-bottom:26px!important}
+a{color:#1A5FBF!important}
+}
+</style>
+</head>
+<body>
+<style>
+  :root{
+    --f-display:'Big Shoulders Display','Arial Narrow','Helvetica Neue',system-ui,sans-serif;
+    --f-body:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --f-mono:'DM Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+
+    /* doc chrome — light (default) */
+    --ground:#F4F6F9;
+    --panel:#FFFFFF;
+    --panel-2:#F7F8FA;
+    --ink:#0A0B0E;
+    --muted:#5F626B;
+    --faint:#8A8D96;
+    --line:#E3E5EA;
+    --line-hi:#C6CBD6;
+    --accent:#2A7FEF;
+    --accent-deep:#1A5FBF;
+    --accent-wash:#1A5FBF12;
+    --green:#17A863;--red:#E04545;--gold:#B8860B;
+    --radius:16px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0B0D12;--panel:#151A22;--panel-2:#11151C;
+      --ink:#E9EBEF;--muted:#9CA2AE;--faint:#6B7280;
+      --line:#242B37;--line-hi:#37404F;
+      --accent:#4E97F6;--accent-deep:#2A7FEF;--accent-wash:#2A7FEF22;
+      --green:#2FBE7C;--red:#F06060;--gold:#D4A017;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0B0D12;--panel:#151A22;--panel-2:#11151C;
+    --ink:#E9EBEF;--muted:#9CA2AE;--faint:#6B7280;
+    --line:#242B37;--line-hi:#37404F;
+    --accent:#4E97F6;--accent-deep:#2A7FEF;--accent-wash:#2A7FEF22;
+    --green:#2FBE7C;--red:#F06060;--gold:#D4A017;
+  }
+  :root[data-theme="light"]{
+    --ground:#F4F6F9;--panel:#FFFFFF;--panel-2:#F7F8FA;
+    --ink:#0A0B0E;--muted:#5F626B;--faint:#8A8D96;
+    --line:#E3E5EA;--line-hi:#C6CBD6;
+    --accent:#2A7FEF;--accent-deep:#1A5FBF;--accent-wash:#1A5FBF12;
+    --green:#17A863;--red:#E04545;--gold:#B8860B;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .container{max-width:1140px;margin:0 auto;padding:0 24px}
+  a{color:var(--accent);text-decoration:none}
+  h1,h2,h3,h4{font-family:var(--f-display);font-weight:800;letter-spacing:.2px;text-wrap:balance;margin:0}
+  p{margin:0}
+  .mono{font-family:var(--f-mono)}
+
+  /* ---- masthead ---- */
+  .mast{padding:64px 0 40px;border-bottom:1px solid var(--line)}
+  .wordmark{font-family:var(--f-display);font-weight:800;font-size:clamp(44px,8vw,68px);letter-spacing:.5px;line-height:.9}
+  .wordmark em{color:var(--accent);font-style:normal}
+  .mast h1{font-size:clamp(22px,3.4vw,30px);margin:22px 0 10px;font-weight:800}
+  .mast .lede{color:var(--muted);max-width:64ch;font-size:16px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .tag{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+  .tag b{color:var(--ink);font-weight:500}
+
+  /* ---- section nav ---- */
+  .secnav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--ground) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .secnav .container{display:flex;gap:4px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+  .secnav .container::-webkit-scrollbar{display:none}
+  .secnav a{white-space:nowrap;font-size:12px;font-weight:700;color:var(--muted);padding:7px 13px;border-radius:999px;letter-spacing:.3px}
+  .secnav a:hover{color:var(--ink);background:var(--panel)}
+
+  /* ---- section shell ---- */
+  section{padding:56px 0;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  section > .container > h2{font-size:clamp(26px,4vw,36px);margin-bottom:10px}
+  .sec-lede{color:var(--muted);max-width:70ch;margin-bottom:34px}
+
+  /* ---- generic panel ---- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+  .grid{display:grid;gap:16px}
+  .cols-2{grid-template-columns:repeat(2,1fr)}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  .cols-4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.cols-3,.cols-4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.cols-2,.cols-3,.cols-4{grid-template-columns:1fr}}
+
+  .micro{font-family:var(--f-mono);font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint)}
+  .kicker-h{font-family:var(--f-display);font-weight:800;font-size:18px;margin-bottom:4px}
+
+  /* ---- color swatches ---- */
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .swatch{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);cursor:pointer;transition:transform .12s,border-color .15s}
+  .swatch:hover{transform:translateY(-2px);border-color:var(--line-hi)}
+  .swatch .chip{height:64px;border-bottom:1px solid var(--line)}
+  .swatch .sw-meta{padding:9px 11px}
+  .swatch .sw-name{font-weight:700;font-size:13px}
+  .swatch .sw-hex{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:1px}
+  .swatch .sw-role{font-size:11px;color:var(--faint);margin-top:5px;line-height:1.35}
+  .group-label{font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:26px 0 12px}
+  .group-label:first-child{margin-top:0}
+
+  /* ---- type specimens ---- */
+  .type-row{display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;padding:20px 0;border-bottom:1px dashed var(--line)}
+  .type-row:last-child{border-bottom:none}
+  .type-tag{flex:0 0 190px}
+  .type-tag .tn{font-family:var(--f-display);font-weight:800;font-size:16px}
+  .type-tag .tr{font-size:12px;color:var(--muted);margin-top:2px}
+  .type-tag .tw{font-family:var(--f-mono);font-size:10.5px;color:var(--faint);margin-top:4px;letter-spacing:.5px}
+  .type-sample{flex:1;min-width:220px}
+
+  /* ---- APP CANVAS (always light — SetList is light-only by brand) ---- */
+  .canvas{background:#FFFFFF;color:#0A0B0E;border:1px solid var(--line);border-radius:var(--radius);padding:22px;font-family:var(--f-body)}
+  .canvas-note{font-family:var(--f-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#8A8D96;margin-bottom:16px;display:flex;align-items:center;gap:7px}
+  .canvas-note::before{content:"";width:8px;height:8px;border-radius:2px;background:#FFF;border:1px solid #C6CBD6}
+  .spec-grid{display:grid;gap:22px}
+  .spec-cell .spec-lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#8A8D96;margin-bottom:9px}
+
+  /* real SetList components (hardcoded true values) */
+  .sl-btn{background:#2A7FEF;color:#fff;border:none;border-radius:13px;padding:13px 16px;font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.3px;cursor:default;display:inline-flex;align-items:center;gap:8px}
+  .sl-btn.ghost{background:#fff;color:#0A0B0E;border:1.5px solid #E3E5EA}
+  .sl-btn.grn{background:#17A863;color:#0A0B0E}
+  .sl-btn.red{background:#E04545;color:#fff}
+  .sl-btn.sm{padding:9px 14px;font-size:12px;border-radius:10px}
+  .sl-input{background:#fff;border:1.5px solid #E3E5EA;border-radius:13px;padding:12px 14px;color:#0A0B0E;font-family:var(--f-body);font-size:14px;width:100%}
+  .sl-input.placeholder{color:#8A8D96}
+  .sl-paste{border:1.5px solid #2A7FEF;border-radius:16px;padding:14px;background:#fff;box-shadow:0 0 0 4px #1A5FBF14;color:#8A8D96;font-size:14px}
+  .sl-pill{display:inline-block;background:#F2F5FA;border:1px solid #E3E5EA;border-radius:8px;font-size:10px;padding:3px 9px;color:#5F626B;font-weight:600}
+  .sl-pill.hi{border-color:#2A7FEF44;color:#2A7FEF}
+  .sl-pill.grn{border-color:#17A86344;color:#17A863}
+  .sl-chip{display:inline-block;background:#fff;border:1.5px solid #E3E5EA;border-radius:20px;padding:5px 13px;font-size:11px;font-weight:700;color:#8A8D96}
+  .sl-chip.on{background:#1A5FBF14;border-color:#2A7FEF;color:#1A5FBF}
+  .sl-platpill{flex:1;border-radius:11px;padding:9px 0;text-align:center;font-family:var(--f-body);font-weight:700;font-size:10.5px;border:1px solid #E3E5EA;color:#8A8D96}
+  .sl-platpill.active{border-color:#2A7FEF;color:#1A5FBF;background:#1A5FBF14}
+  .sl-flexrow{display:flex;gap:8px}
+
+  .sl-wcard{background:#fff;border:1px solid #C6CBD6;border-radius:20px;overflow:hidden;max-width:300px}
+  .sl-wthumb{height:120px;background:linear-gradient(160deg,#F2F3F6,#F7F8FA 60%,#E8ECF3);display:flex;align-items:center;justify-content:center;position:relative}
+  .sl-thmoji{font-size:46px}
+  .sl-cbadge{position:absolute;top:11px;left:11px;background:#fff;color:#0A0B0E;font-weight:700;font-size:9px;letter-spacing:1px;padding:4px 9px;border-radius:6px;text-transform:uppercase}
+  .sl-cbody{padding:14px 16px 16px}
+  .sl-ctitle{font-family:var(--f-display);font-size:18px;font-weight:800;line-height:1.1;margin-bottom:4px}
+  .sl-cby{font-size:11.5px;color:#8A8D96;margin-bottom:10px}
+  .sl-cby b{color:#5F626B;font-weight:700}
+  .sl-cpills{display:flex;gap:7px;flex-wrap:wrap}
+
+  .sl-scard{background:#fff;border:1px solid #E3E5EA;border-radius:14px;padding:11px 10px;text-align:left;min-width:90px}
+  .sl-sval{font-family:var(--f-display);font-size:22px;font-weight:800;color:#2A7FEF}
+  .sl-slbl{font-size:9px;color:#8A8D96;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+  .sl-streak .sl-sval{color:#B8860B}
+
+  .sl-exitem{background:#fff;border:1px solid #E3E5EA;border-radius:15px;padding:12px 13px;display:flex;align-items:center;gap:11px;max-width:340px}
+  .sl-exnum{font-family:var(--f-display);font-size:18px;font-weight:800;color:#C6CBD6;min-width:22px}
+  .sl-exname{font-weight:700;font-size:13px}
+  .sl-exdetail{font-size:11px;color:#8A8D96}
+  .sl-exsrc{font-size:9px;color:#1A5FBF;margin-top:3px;font-weight:700}
+  .sl-vidbtn{display:flex;align-items:center;gap:4px;background:#F2F3F6;border:1px solid #E3E5EA;border-radius:8px;padding:4px 9px;font-size:10px;font-weight:700;color:#5F626B;white-space:nowrap}
+
+  .sl-prbadge{display:inline-flex;align-items:center;gap:5px;background:#B8860B18;border:1px solid #B8860B44;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#B8860B}
+  .sl-toast{display:inline-block;background:#2A7FEF;color:#fff;padding:9px 18px;border-radius:11px;font-weight:700;font-size:12px}
+  .sl-sh{font-family:var(--f-display);font-size:10px;font-weight:700;letter-spacing:2px;color:#8A8D96;text-transform:uppercase}
+  .sl-setrow{display:grid;grid-template-columns:28px 1fr 1fr 1fr 34px;gap:8px;align-items:center;background:#F2F3F6;border:1px solid #E3E5EA;border-radius:11px;padding:9px 11px;max-width:340px}
+  .sl-setlbl{font-family:var(--f-mono);font-size:11px;color:#8A8D96;text-align:center}
+  .sl-setinput{background:#fff;border:1px solid #E3E5EA;border-radius:8px;padding:6px 4px;font-family:var(--f-mono);font-size:12px;text-align:center;color:#8A8D96}
+  .sl-setcheck{width:28px;height:28px;border-radius:9px;background:#17A86322;border:1.5px solid #17A86355;display:flex;align-items:center;justify-content:center;color:#17A863;font-size:13px}
+  .sl-nav{display:flex;justify-content:space-around;background:#F7F8FA;border:1px solid #E3E5EA;border-radius:14px;padding:8px 4px;max-width:360px}
+  .sl-ni{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#8A8D96}
+  .sl-ni.on{color:#0A0B0E}
+  .sl-niw{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .sl-ni.on .sl-niw{background:#1A5FBF14;border:1px solid #2A7FEF;color:#2A7FEF}
+  .sl-appicon{width:76px;height:76px;border-radius:18px;background:#fff;border:1px solid #C6CBD6;display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:38px;letter-spacing:-2px}
+  .sl-appicon .s{color:#0A0B0E}.sl-appicon .l{color:#2A7FEF}
+
+  /* ---- flow map ---- */
+  .flow-tier{margin-bottom:26px}
+  .flow-tier .micro{margin-bottom:12px}
+  .flow-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .node{background:var(--panel);border:1px solid var(--line-hi);border-radius:12px;padding:11px 15px;font-weight:700;font-size:13.5px;display:inline-flex;flex-direction:column;gap:2px;min-width:0}
+  .node small{font-weight:500;font-size:10.5px;color:var(--muted);letter-spacing:.2px}
+  .node.gate{border-color:var(--accent);background:var(--accent-wash)}
+  .node.term{border-style:dashed}
+  .arrow{color:var(--faint);font-family:var(--f-mono);font-size:15px;flex:none}
+  .arrow small{display:block;font-size:9px;letter-spacing:.5px}
+
+  /* ---- screen cards ---- */
+  .screens{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  @media(max-width:820px){.screens{grid-template-columns:1fr}}
+  .screen{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:14px}
+  .screen-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .screen-head h3{font-size:19px}
+  .screen-head .fn{font-family:var(--f-mono);font-size:10.5px;color:var(--faint);margin-top:3px}
+  .badge{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;padding:4px 9px;border-radius:999px;font-weight:500;white-space:nowrap;border:1px solid var(--line-hi);color:var(--muted)}
+  .badge.gate{color:var(--accent);border-color:var(--accent);background:var(--accent-wash)}
+  .badge.tab{color:var(--green);border-color:color-mix(in srgb,var(--green) 55%,var(--line))}
+  .badge.sub{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 55%,var(--line))}
+  .badge.modal{color:var(--muted)}
+  .screen .purpose{color:var(--muted);font-size:13.5px}
+  /* wireframe */
+  .wire{border:1px dashed var(--line-hi);border-radius:12px;overflow:hidden;background:var(--panel-2)}
+  .band{padding:8px 11px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.4px;color:var(--muted);border-bottom:1px dashed var(--line)}
+  .band:last-child{border-bottom:none}
+  .band.hd{background:var(--accent-wash);color:var(--accent-deep);font-weight:500}
+  .band.nav{background:var(--panel);color:var(--faint)}
+  .band.pl{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+  .anat{font-size:13px}
+  .anat b{font-family:var(--f-display);font-weight:800;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+  .anat ul{margin:0;padding-left:17px}
+  .anat li{margin-bottom:3px}
+  .states{display:flex;flex-wrap:wrap;gap:6px}
+  .state{font-size:11px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:7px;padding:3px 8px}
+  .state b{color:var(--ink);font-weight:700}
+
+  /* ---- new-screens ---- */
+  .idea{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;padding:16px 18px}
+  .idea h4{font-size:16px;margin-bottom:5px}
+  .idea .why{color:var(--muted);font-size:13px}
+  .idea .maps{font-family:var(--f-mono);font-size:10.5px;color:var(--faint);margin-top:9px;letter-spacing:.3px}
+
+  .callout{background:var(--accent-wash);border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:12px;padding:15px 18px;font-size:13.5px;color:var(--ink)}
+  .callout b{font-family:var(--f-display);font-weight:800}
+  footer{padding:40px 0 70px;color:var(--muted);font-size:13px}
+  .toast-live{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ink);color:var(--ground);padding:9px 18px;border-radius:11px;font-weight:700;font-size:12.5px;opacity:0;transition:all .22s;pointer-events:none;z-index:200}
+  .toast-live.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <!-- ============ MASTHEAD ============ -->
+  <header class="mast">
+    <div class="container">
+      <div class="wordmark">Set<em>List</em></div>
+      <h1>Complete UI Blueprint</h1>
+      <p class="lede">Every screen, component, and design token in the shipped app — pulled straight from the source (<span class="mono">src/App.jsx</span> + the brand kit), not idealized. A working reference to rebuild and expand the UI in Figma, and a canvas for the screens that don't exist yet.</p>
+      <div class="meta-row">
+        <span class="tag"><b>Source</b> src/App.jsx · brand-kit/BRAND.md</span>
+        <span class="tag"><b>Frame</b> mobile · 430px max-width</span>
+        <span class="tag"><b>Theme</b> light-only (brand commitment)</span>
+        <span class="tag"><b>17</b> screens &amp; overlays</span>
+        <span class="tag"><b>As of</b> Jul 22 2026 · Phase 2 shipped</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ SECTION NAV ============ -->
+  <nav class="secnav">
+    <div class="container">
+      <a href="#foundations">Foundations</a>
+      <a href="#color">Color</a>
+      <a href="#type">Type</a>
+      <a href="#components">Components</a>
+      <a href="#flow">Flow</a>
+      <a href="#screens">Screens</a>
+      <a href="#new">New screens</a>
+    </div>
+  </nav>
+
+  <!-- ============ FOUNDATIONS ============ -->
+  <section id="foundations">
+    <div class="container">
+      <div class="eyebrow">01 — Foundations</div>
+      <h2>Identity</h2>
+      <p class="sec-lede">SetList reads premium, considered, quietly confident — closer to Whoop or Strava's editorial moments than gym-app maximalism. Restrained color, real typographic hierarchy, a light white ground. No gradients, no drop shadows, no glow — anywhere.</p>
+
+      <div class="grid cols-2">
+        <div class="panel">
+          <div class="micro">Wordmark</div>
+          <div style="font-family:var(--f-display);font-weight:800;font-size:52px;letter-spacing:.5px;margin:14px 0 12px;color:var(--ink)">Set<span style="color:var(--accent)">List</span></div>
+          <p style="color:var(--muted);font-size:13.5px"><b style="color:var(--ink)">Set</b> in near-black, <b style="color:var(--accent)">List</b> in brand blue — Big Shoulders Display 800, no gap between the words. Matches the in-app header exactly (<span class="mono">Set&lt;em&gt;List&lt;/em&gt;</span>). Shipped as <span class="mono">logo.svg</span> with the font embedded.</p>
+        </div>
+        <div class="panel">
+          <div class="micro">App icon</div>
+          <div style="display:flex;gap:16px;align-items:center;margin:14px 0 12px">
+            <div class="sl-appicon"><span class="s">S</span><span class="l">L</span></div>
+            <div style="display:flex;gap:10px">
+              <div class="sl-appicon" style="width:44px;height:44px;font-size:22px;border-radius:11px"><span class="s">S</span><span class="l">L</span></div>
+              <div class="sl-appicon" style="width:32px;height:32px;font-size:16px;border-radius:8px"><span class="s">S</span><span class="l">L</span></div>
+            </div>
+          </div>
+          <p style="color:var(--muted);font-size:13.5px">Two-tone <b style="color:var(--ink)">SL</b> monogram — ink S + blue L, same Big Shoulders 800, on a plain white field. Ships as <span class="mono">icon-192/512</span>, <span class="mono">apple-touch-icon</span>, <span class="mono">favicon.svg</span>. (The old purple-gradient bolt is retired — wrong color family, uses a gradient the brand avoids.)</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COLOR ============ -->
+  <section id="color">
+    <div class="container">
+      <div class="eyebrow">01 — Foundations</div>
+      <h2>Color</h2>
+      <p class="sec-lede">One accent, three semantics, cool-biased neutrals. Blue is the <em>only</em> brand color — reserved for the logo, links, exactly one primary CTA per screen, and detected/active states. Green, red, and gold are strictly semantic. Tap any swatch to copy its hex.</p>
+
+      <div class="group-label">Brand — blue only</div>
+      <div class="swatches">
+        <div class="swatch" data-hex="#2A7FEF"><div class="chip" style="background:#2A7FEF"></div><div class="sw-meta"><div class="sw-name">blueBright</div><div class="sw-hex">#2A7FEF</div><div class="sw-role">Primary CTA, active/detected states</div></div></div>
+        <div class="swatch" data-hex="#1A5FBF"><div class="chip" style="background:#1A5FBF"></div><div class="sw-meta"><div class="sw-name">blue</div><div class="sw-hex">#1A5FBF</div><div class="sw-role">Logo, links, active chip text</div></div></div>
+        <div class="swatch" data-hex="#1A5FBF14"><div class="chip" style="background:#1A5FBF14"></div><div class="sw-meta"><div class="sw-name">blueGlow</div><div class="sw-hex">#1A5FBF14</div><div class="sw-role">~8% wash — secondary active fill (never a 2nd solid)</div></div></div>
+      </div>
+
+      <div class="group-label">Ink — text, never pure black</div>
+      <div class="swatches">
+        <div class="swatch" data-hex="#0A0B0E"><div class="chip" style="background:#0A0B0E"></div><div class="sw-meta"><div class="sw-name">text</div><div class="sw-hex">#0A0B0E</div><div class="sw-role">Primary text</div></div></div>
+        <div class="swatch" data-hex="#5F626B"><div class="chip" style="background:#5F626B"></div><div class="sw-meta"><div class="sw-name">mutedHi</div><div class="sw-hex">#5F626B</div><div class="sw-role">Secondary text, bylines</div></div></div>
+        <div class="swatch" data-hex="#8A8D96"><div class="chip" style="background:#8A8D96"></div><div class="sw-meta"><div class="sw-name">muted</div><div class="sw-hex">#8A8D96</div><div class="sw-role">Tertiary text, labels, placeholders</div></div></div>
+        <div class="swatch" data-hex="#4A4D55"><div class="chip" style="background:#4A4D55"></div><div class="sw-meta"><div class="sw-name">accentDim</div><div class="sw-hex">#4A4D55</div><div class="sw-role">Body inside cards, icon glyphs</div></div></div>
+      </div>
+
+      <div class="group-label">Surfaces — cool-biased greys</div>
+      <div class="swatches">
+        <div class="swatch" data-hex="#FFFFFF"><div class="chip" style="background:#FFFFFF"></div><div class="sw-meta"><div class="sw-name">bg / card</div><div class="sw-hex">#FFFFFF</div><div class="sw-role">App ground &amp; card fill</div></div></div>
+        <div class="swatch" data-hex="#F7F8FA"><div class="chip" style="background:#F7F8FA"></div><div class="sw-meta"><div class="sw-name">deep</div><div class="sw-hex">#F7F8FA</div><div class="sw-role">Nav bar, recessed sheets</div></div></div>
+        <div class="swatch" data-hex="#F2F3F6"><div class="chip" style="background:#F2F3F6"></div><div class="sw-meta"><div class="sw-name">surface</div><div class="sw-hex">#F2F3F6</div><div class="sw-role">Insets, set rows, dashed drops</div></div></div>
+        <div class="swatch" data-hex="#F2F5FA"><div class="chip" style="background:#F2F5FA"></div><div class="sw-meta"><div class="sw-name">tag</div><div class="sw-hex">#F2F5FA</div><div class="sw-role">Pill / tag fill</div></div></div>
+      </div>
+
+      <div class="group-label">Borders — hairline, 1–1.5px</div>
+      <div class="swatches">
+        <div class="swatch" data-hex="#E3E5EA"><div class="chip" style="background:#E3E5EA"></div><div class="sw-meta"><div class="sw-name">border</div><div class="sw-hex">#E3E5EA</div><div class="sw-role">Default hairline</div></div></div>
+        <div class="swatch" data-hex="#C6CBD6"><div class="chip" style="background:#C6CBD6"></div><div class="sw-meta"><div class="sw-name">borderHi</div><div class="sw-hex">#C6CBD6</div><div class="sw-role">Emphasized / featured card edge</div></div></div>
+      </div>
+
+      <div class="group-label">Semantic — never decorative</div>
+      <div class="swatches">
+        <div class="swatch" data-hex="#17A863"><div class="chip" style="background:#17A863"></div><div class="sw-meta"><div class="sw-name">green</div><div class="sw-hex">#17A863</div><div class="sw-role">Done / success — set complete, finish CTA</div></div></div>
+        <div class="swatch" data-hex="#E04545"><div class="chip" style="background:#E04545"></div><div class="sw-meta"><div class="sw-name">red</div><div class="sw-hex">#E04545</div><div class="sw-role">Destructive — delete, remove</div></div></div>
+        <div class="swatch" data-hex="#B8860B"><div class="chip" style="background:#B8860B"></div><div class="sw-meta"><div class="sw-name">gold</div><div class="sw-hex">#B8860B</div><div class="sw-role">PR / highlight — personal records, streak</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TYPE ============ -->
+  <section id="type">
+    <div class="container">
+      <div class="eyebrow">01 — Foundations</div>
+      <h2>Typography</h2>
+      <p class="sec-lede">Three faces, each with exactly one job — resist adding a fourth. All free on Google Fonts (and in Figma). Sentence case for buttons and labels; small uppercase micro-labels use letter-spacing to read intentional, not shouty. <span class="mono" style="color:var(--faint)">(Samples below fall back to condensed/system/mono where the real faces aren't installed — the intended face is named on each row.)</span></p>
+
+      <div class="panel">
+        <div class="type-row">
+          <div class="type-tag"><div class="tn">Big Shoulders Display</div><div class="tr">Headings · CTAs · stat numbers · logo</div><div class="tw">weights 700 · 800</div></div>
+          <div class="type-sample" style="font-family:var(--f-display);font-weight:800">
+            <div style="font-size:34px;line-height:1.05">Build your library</div>
+            <div style="font-size:52px;color:var(--accent);letter-spacing:.5px">128 · 4.2k · 07</div>
+          </div>
+        </div>
+        <div class="type-row">
+          <div class="type-tag"><div class="tn">Manrope</div><div class="tr">Body copy · descriptions · inputs</div><div class="tw">weights 400 · 500 · 700</div></div>
+          <div class="type-sample" style="font-family:var(--f-body)">
+            <div style="font-size:15px;line-height:1.6;color:var(--ink)">Paste a link from any workout video. We'll find the exercises, sets, and timestamps for you — then you review and save.</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px">By <b style="color:var(--mutedHi)">@thefitfounder</b> · secondary byline / label copy</div>
+          </div>
+        </div>
+        <div class="type-row">
+          <div class="type-tag"><div class="tn">DM Mono</div><div class="tr">Timers · set/rep counts · timestamps</div><div class="tw">weight 500</div></div>
+          <div class="type-sample" style="font-family:var(--f-mono);font-weight:500;color:var(--ink)">
+            <div style="font-size:26px">12:45</div>
+            <div style="font-size:14px;color:var(--muted);margin-top:6px">00:30 rest · 3×12 · S4 · ▶ 1:20 in video</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:19px;margin:34px 0 14px">Shape &amp; spacing</h3>
+      <div class="grid cols-4">
+        <div class="panel"><div class="micro">Card radius</div><div style="font-family:var(--f-display);font-weight:800;font-size:30px;margin-top:8px">20px</div><div style="height:34px;border:1.5px solid var(--line-hi);border-radius:20px;margin-top:12px"></div></div>
+        <div class="panel"><div class="micro">Input / button</div><div style="font-family:var(--f-display);font-weight:800;font-size:30px;margin-top:8px">13px</div><div style="height:34px;border:1.5px solid var(--line-hi);border-radius:13px;margin-top:12px"></div></div>
+        <div class="panel"><div class="micro">Pills / chips</div><div style="font-family:var(--f-display);font-weight:800;font-size:30px;margin-top:8px">full</div><div style="height:34px;border:1.5px solid var(--line-hi);border-radius:999px;margin-top:12px"></div></div>
+        <div class="panel"><div class="micro">Borders · gaps</div><div style="font-family:var(--f-display);font-weight:800;font-size:30px;margin-top:8px">1–1.5px</div><div style="font-size:12px;color:var(--muted);margin-top:12px">Hairline only. Component gaps 7–13px. Density from spacing discipline, not cramming.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPONENTS ============ -->
+  <section id="components">
+    <div class="container">
+      <div class="eyebrow">02 — Component library</div>
+      <h2>Components</h2>
+      <p class="sec-lede">The reusable building blocks, rendered at their true values from <span class="mono">STYLES</span>. These always sit on the app's white canvas — SetList is light-only by brand, so the specimens don't theme-shift even when this doc does.</p>
+
+      <div class="grid cols-2">
+        <div class="canvas">
+          <div class="canvas-note">App canvas · light-only</div>
+          <div class="spec-grid">
+            <div class="spec-cell"><div class="spec-lbl">Buttons — one solid primary per screen</div>
+              <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center">
+                <span class="sl-btn">Build workout</span>
+                <span class="sl-btn ghost">Remix</span>
+                <span class="sl-btn grn">Finish &amp; log</span>
+                <span class="sl-btn sm">Build</span>
+                <span class="sl-btn ghost sm">New exercise</span>
+              </div>
+            </div>
+            <div class="spec-cell"><div class="spec-lbl">Inputs</div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <div class="sl-input placeholder">Search workouts…</div>
+                <div class="sl-paste">youtube.com, tiktok.com, or instagram.com link</div>
+              </div>
+            </div>
+            <div class="spec-cell"><div class="spec-lbl">Platform pills — detected state</div>
+              <div class="sl-flexrow" style="max-width:300px">
+                <span class="sl-platpill active">YouTube</span>
+                <span class="sl-platpill">TikTok</span>
+                <span class="sl-platpill">Instagram</span>
+              </div>
+            </div>
+            <div class="spec-cell"><div class="spec-lbl">Pills &amp; filter chips</div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center">
+                <span class="sl-pill">Strength</span>
+                <span class="sl-pill hi">⏱ 24m</span>
+                <span class="sl-pill grn">Done</span>
+                <span class="sl-chip on">All Creators</span>
+                <span class="sl-chip">Legs &amp; Glutes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas">
+          <div class="canvas-note">App canvas · light-only</div>
+          <div class="spec-cell"><div class="spec-lbl">Workout card — the core object</div>
+            <div class="sl-wcard">
+              <div class="sl-wthumb"><span class="sl-thmoji">✨</span><span class="sl-cbadge">YouTube</span></div>
+              <div class="sl-cbody">
+                <div class="sl-ctitle">20-Min Full Body Burn</div>
+                <div class="sl-cby">By <b>@thefitfounder</b></div>
+                <div class="sl-cpills">
+                  <span class="sl-pill">HIIT</span>
+                  <span class="sl-pill hi">⏱ 20m</span>
+                  <span class="sl-pill">8 exercises</span>
+                  <span class="sl-pill">Intermediate</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas">
+          <div class="canvas-note">App canvas · light-only</div>
+          <div class="spec-cell"><div class="spec-lbl">Stat cards &amp; badges</div>
+            <div style="display:flex;flex-wrap:wrap;gap:9px;margin-bottom:14px">
+              <div class="sl-scard"><div class="sl-sval">12</div><div class="sl-slbl">Workouts</div></div>
+              <div class="sl-scard"><div class="sl-sval">148</div><div class="sl-slbl">Exercises</div></div>
+              <div class="sl-scard sl-streak"><div class="sl-sval">7</div><div class="sl-slbl">Streak 🔥</div></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span class="sl-prbadge">🏆 185 lb</span>
+              <span class="sl-toast">Workout saved ✓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas">
+          <div class="canvas-note">App canvas · light-only</div>
+          <div class="spec-cell"><div class="spec-lbl">Exercise row &amp; live set row</div>
+            <div class="sl-exitem" style="margin-bottom:11px">
+              <div class="sl-exnum">01</div>
+              <div style="font-size:19px">🦵</div>
+              <div style="flex:1">
+                <div class="sl-exname">Bulgarian Split Squat</div>
+                <div class="sl-exdetail">3 sets · 12 reps · Rest 60s</div>
+                <div class="sl-exsrc">@thefitfounder</div>
+              </div>
+              <span class="sl-vidbtn">▶ Demo</span>
+            </div>
+            <div class="sl-setrow">
+              <div class="sl-setlbl">S1</div>
+              <div class="sl-setinput">12</div>
+              <div class="sl-setinput">45</div>
+              <div class="sl-setinput">—</div>
+              <div class="sl-setcheck">✓</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas">
+          <div class="canvas-note">App canvas · light-only</div>
+          <div class="spec-cell"><div class="spec-lbl">Header &amp; bottom navigation</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 4px 16px;border-bottom:1px solid #E3E5EA;margin-bottom:16px">
+              <div style="font-family:var(--f-display);font-weight:800;font-size:26px">Set<span style="color:#2A7FEF">List</span></div>
+            </div>
+            <div class="sl-nav">
+              <div class="sl-ni on"><div class="sl-niw">🏠</div>Home</div>
+              <div class="sl-ni"><div class="sl-niw">＋</div>Import</div>
+              <div class="sl-ni"><div class="sl-niw">📚</div>Library</div>
+              <div class="sl-ni"><div class="sl-niw">📊</div>Progress</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas">
+          <div class="canvas-note">App canvas · light-only</div>
+          <div class="spec-cell"><div class="spec-lbl">Section header · empty state</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+              <span class="sl-sh">All Workouts</span>
+              <span style="font-size:12px;font-weight:700;color:#2A7FEF">+ Import</span>
+            </div>
+            <div style="text-align:center;color:#8A8D96;padding:14px">
+              <div style="font-size:40px;margin-bottom:9px">🏋️</div>
+              <div style="font-family:var(--f-display);font-weight:800;font-size:17px;color:#0A0B0E;margin-bottom:4px">No Workouts Yet</div>
+              <div style="font-size:12px;line-height:1.6">Tap Import to add your first workout from YouTube, Instagram, or TikTok.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FLOW ============ -->
+  <section id="flow">
+    <div class="container">
+      <div class="eyebrow">03 — Navigation</div>
+      <h2>App map &amp; core loop</h2>
+      <p class="sec-lede">A hard auth gate wraps everything. Once inside, a persistent 4-tab bar carries the app; the extract → review → run → track loop threads across tabs and full-screen sub-views.</p>
+
+      <div class="panel">
+        <div class="flow-tier">
+          <div class="micro">Gate — before the app renders</div>
+          <div class="flow-row">
+            <div class="node term">Loading<small>"SetList" splash</small></div>
+            <span class="arrow">→</span>
+            <div class="node gate">Auth<small>Google · magic link</small></div>
+            <span class="arrow">→</span>
+            <div class="node gate">Onboarding<small>3 slides · new accounts</small></div>
+            <span class="arrow">→</span>
+            <div class="node">Home</div>
+            <span class="arrow" style="margin-left:6px">↘<small>one-time</small></span>
+            <div class="node term">Import prompt<small>if local data exists</small></div>
+          </div>
+        </div>
+
+        <div class="flow-tier">
+          <div class="micro">Tabs — persistent bottom nav</div>
+          <div class="flow-row">
+            <div class="node">🏠 Home<small>library + overview</small></div>
+            <div class="node">＋ Import<small>paste / upload</small></div>
+            <div class="node">📚 Library<small>exercises + builder</small></div>
+            <div class="node">📊 Progress<small>stats + history</small></div>
+          </div>
+        </div>
+
+        <div class="flow-tier">
+          <div class="micro">Core loop — full-screen sub-views</div>
+          <div class="flow-row">
+            <div class="node">＋ Import</div><span class="arrow">→</span>
+            <div class="node">Review<small>edit extracted</small></div><span class="arrow">→</span>
+            <div class="node">Detail</div><span class="arrow">→</span>
+            <div class="node">Active<small>timer + log sets</small></div><span class="arrow">→</span>
+            <div class="node">Completion<small>confetti</small></div><span class="arrow">→</span>
+            <div class="node">📊 Progress</div>
+          </div>
+          <div class="flow-row" style="margin-top:12px">
+            <div class="node">🏠 Home</div><span class="arrow">→</span><div class="node">Detail</div>
+            <span class="arrow" style="margin:0 10px">·</span>
+            <div class="node">📚 Library</div><span class="arrow">→</span><div class="node">Builder</div>
+            <span class="arrow">→</span><div class="node">Detail</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCREENS ============ -->
+  <section id="screens">
+    <div class="container">
+      <div class="eyebrow">04 — Screen inventory</div>
+      <h2>Every screen</h2>
+      <p class="sec-lede">All 17, each with its real render function, region wireframe, anatomy, and states. Badges: <span class="badge gate">Gate</span> pre-app · <span class="badge tab">Tab</span> bottom-nav · <span class="badge sub">Sub</span> full-screen sub-view · <span class="badge modal">Overlay</span> modal/sheet.</p>
+
+      <div class="screens">
+
+        <!-- AUTH -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Auth</h3><div class="fn">AuthScreen()</div></div><span class="badge gate">Gate</span></div>
+          <p class="purpose">The wall. No app until signed in. Google one-tap + passwordless email.</p>
+          <div class="wire">
+            <div class="band">SetList logo (40px)</div>
+            <div class="band">"Save every workout" + subhead</div>
+            <div class="band pl">◼ Continue with Google (primary)</div>
+            <div class="band">— or —</div>
+            <div class="band">email input</div>
+            <div class="band">Email me a magic link (ghost)</div>
+          </div>
+          <div class="anat"><b>States</b>
+            <div class="states"><span class="state"><b>default</b> both methods</span><span class="state"><b>sent</b> 📬 check-your-email</span><span class="state"><b>error</b> red message</span><span class="state"><b>busy</b> "Sending…"</span></div>
+          </div>
+        </div>
+
+        <!-- ONBOARDING -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Onboarding</h3><div class="fn">OnboardingScreen()</div></div><span class="badge gate">Gate</span></div>
+          <p class="purpose">Three-slide intro for brand-new accounts (synced from <span class="mono">profile.onboarded</span>).</p>
+          <div class="wire">
+            <div class="band">emoji tile (120px, blue-wash)</div>
+            <div class="band">slide title (Big Shoulders 26)</div>
+            <div class="band">2–3 line subhead</div>
+            <div class="band">● — — progress dots</div>
+            <div class="band pl">Continue → / Get started</div>
+            <div class="band">Skip (hidden on last slide)</div>
+          </div>
+          <div class="anat"><b>Slides</b><ul><li>Welcome — your workout library</li><li>How it works — paste, AI extracts</li><li>Build your library — save, track</li></ul></div>
+        </div>
+
+        <!-- HOME -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Home</h3><div class="fn">renderHome()</div></div><span class="badge tab">Tab</span></div>
+          <p class="purpose">Library + at-a-glance overview. Landing tab after sign-in.</p>
+          <div class="wire">
+            <div class="band hd">Header — SetList logo</div>
+            <div class="band">Overview · 4 stat cards (Workouts / Exercises / Logged / Streak)</div>
+            <div class="band">🔍 search input (clearable)</div>
+            <div class="band">creator filter chips (if &gt;1 creator)</div>
+            <div class="band">"All Workouts" header · + Import</div>
+            <div class="band">workout cards (first = featured)</div>
+            <div class="band nav">Bottom nav</div>
+          </div>
+          <div class="anat"><b>States</b>
+            <div class="states"><span class="state"><b>empty</b> 🏋️ + Import CTA</span><span class="state"><b>no results</b> 🔍</span><span class="state"><b>filtered</b> "Results · n"</span></div>
+          </div>
+        </div>
+
+        <!-- IMPORT -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Import</h3><div class="fn">ImportScreen()</div></div><span class="badge tab">Tab</span></div>
+          <p class="purpose">The extraction entry point — paste a link or upload a video.</p>
+          <div class="wire">
+            <div class="band hd">Header — SetList logo</div>
+            <div class="band">kicker copy</div>
+            <div class="band pl">paste field (hot when filled)</div>
+            <div class="band">platform pills — YT / TikTok / IG (auto-detect)</div>
+            <div class="band">contextual hint (IG needs caption)</div>
+            <div class="band">description textarea (optional)</div>
+            <div class="band pl">Build workout (primary)</div>
+            <div class="band">"No link? Upload a video instead"</div>
+            <div class="band nav">Bottom nav</div>
+          </div>
+          <div class="anat"><b>States / variants</b>
+            <div class="states"><span class="state"><b>link</b> paste + pills</span><span class="state"><b>upload</b> file + required @handle</span><span class="state"><b>analyzing</b> 4-stage checklist + elapsed timer</span></div>
+          </div>
+        </div>
+
+        <!-- REVIEW -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Review</h3><div class="fn">ReviewScreen()</div></div><span class="badge sub">Sub</span></div>
+          <p class="purpose">Post-extraction edit pass — fix the AI before it's saved.</p>
+          <div class="wire">
+            <div class="band hd">← Review Workout · Save ✓</div>
+            <div class="band">source video embed (if YouTube)</div>
+            <div class="band">Title input</div>
+            <div class="band">Type + Level selects</div>
+            <div class="band">⚠ gold "review before saving" note</div>
+            <div class="band">editable exercise rows (name / sets / reps / rest)</div>
+            <div class="band">+ Add Exercise (dashed)</div>
+            <div class="band pl">Save Workout ✓</div>
+          </div>
+          <div class="anat"><b>Notes</b><ul><li>Every field editable pre-save</li><li>Row-level remove (× button)</li><li>Persists to Supabase on save → Detail</li></ul></div>
+        </div>
+
+        <!-- DETAIL -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Workout detail</h3><div class="fn">DetailScreen()</div></div><span class="badge sub">Sub</span></div>
+          <p class="purpose">The saved workout — watch, start, remix, or delete.</p>
+          <div class="wire">
+            <div class="band hd">← workout title</div>
+            <div class="band">video / thumbnail / emoji hero (16:9)</div>
+            <div class="band">stats row — Minutes / Exercises / Times Done</div>
+            <div class="band">Coach Notes (if any)</div>
+            <div class="band pl">Start workout (primary)</div>
+            <div class="band">exercise list — each w/ ▶ Demo + PR flag</div>
+            <div class="band">Remix · Progress (ghost row)</div>
+            <div class="band">🗑 Delete Workout (red)</div>
+          </div>
+          <div class="anat"><b>Hero fallbacks</b><ul><li>YouTube embed → thumbnail → emoji tile</li><li>Demo opens full-screen VideoOverlay</li></ul></div>
+        </div>
+
+        <!-- ACTIVE -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Active workout</h3><div class="fn">renderActiveWorkout()</div></div><span class="badge sub">Sub</span></div>
+          <p class="purpose">The tracker — run the session, log every set live. No bottom nav.</p>
+          <div class="wire">
+            <div class="band hd">← title · ⏱ live timer (DM Mono)</div>
+            <div class="band">"n/n sets · %" · Finish shortcut</div>
+            <div class="band">progress bar (blue)</div>
+            <div class="band">expandable exercise cards</div>
+            <div class="band pl">↳ Watch demo (pulse) + set rows: Reps/Weight/Time/✓</div>
+            <div class="band">+ Add set</div>
+            <div class="band">Finish &amp; log workout (green, pinned)</div>
+          </div>
+          <div class="anat"><b>Behaviors</b><ul><li>Auto-advances to next exercise when all sets done</li><li>Set rows = DM Mono inputs, green when done</li></ul></div>
+        </div>
+
+        <!-- COMPLETION -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Completion</h3><div class="fn">CompletionScreen()</div></div><span class="badge sub">Sub</span></div>
+          <p class="purpose">The reward moment — confetti, session summary, on to Progress.</p>
+          <div class="wire">
+            <div class="band">🎊 confetti burst (40 particles)</div>
+            <div class="band">✓ check ring (blue)</div>
+            <div class="band">"Workout Complete!" + title</div>
+            <div class="band">2×2 stat grid — Duration / Exercises / Sets / Volume</div>
+            <div class="band pl">View Progress 📊</div>
+          </div>
+          <div class="anat"><b>Note</b><ul><li>Full-screen overlay (z 300), haptic buzz on show</li><li>Writes the session to Supabase in the background</li></ul></div>
+        </div>
+
+        <!-- LIBRARY -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Library</h3><div class="fn">LibraryScreen()</div></div><span class="badge tab">Tab</span></div>
+          <p class="purpose">Every exercise across all workouts + your own. Three views, plus the builder.</p>
+          <div class="wire">
+            <div class="band hd">Header — SetList logo</div>
+            <div class="band">"Exercise Library · n"</div>
+            <div class="band">Build workout · + New exercise</div>
+            <div class="band">view chips — ⊞ Grid / ≡ List / ⊟ Grouped</div>
+            <div class="band">muscle-group filter chips</div>
+            <div class="band">exercise cards (tap → demo overlay)</div>
+            <div class="band nav">Bottom nav</div>
+          </div>
+          <div class="anat"><b>Views &amp; modes</b>
+            <div class="states"><span class="state"><b>grid</b> 2-col cards</span><span class="state"><b>list</b> rows</span><span class="state"><b>grouped</b> by muscle</span><span class="state"><b>builder</b> name + pick + save</span><span class="state"><b>empty</b> 📚</span></div>
+          </div>
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Progress</h3><div class="fn">ProgressScreen()</div></div><span class="badge tab">Tab</span></div>
+          <p class="purpose">Streaks, weekly volume, PRs, full history — and the account row.</p>
+          <div class="wire">
+            <div class="band hd">Header — SetList logo</div>
+            <div class="band">streak / total / volume cells (gold)</div>
+            <div class="band">Weekly Volume bar chart (7-day)</div>
+            <div class="band">Personal Records 🏆 list</div>
+            <div class="band">Workout History log items</div>
+            <div class="band">account email · Sign out</div>
+            <div class="band nav">Bottom nav</div>
+          </div>
+          <div class="anat"><b>States</b>
+            <div class="states"><span class="state"><b>empty</b> 📅 no logs</span><span class="state"><b>PRs hidden</b> until first logged weight</span></div>
+          </div>
+        </div>
+
+        <!-- CREATE EX MODAL -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Create exercise</h3><div class="fn">CreateExModal()</div></div><span class="badge modal">Overlay</span></div>
+          <p class="purpose">Bottom sheet to add a custom exercise to your library.</p>
+          <div class="wire">
+            <div class="band">Create Exercise · ×</div>
+            <div class="band">Name * · Muscle group select</div>
+            <div class="band">Sets / Reps / Weight (3-up)</div>
+            <div class="band">Notes / form cues</div>
+            <div class="band">Video reference URL</div>
+            <div class="band pl">Save to Library</div>
+          </div>
+        </div>
+
+        <!-- IMPORT PROMPT -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Import prompt</h3><div class="fn">ImportPromptModal()</div></div><span class="badge modal">Overlay</span></div>
+          <p class="purpose">One-time offer to migrate pre-account local workouts into the new account.</p>
+          <div class="wire">
+            <div class="band">📥 "Import your workouts?"</div>
+            <div class="band">explainer copy</div>
+            <div class="band pl">Import to my account</div>
+            <div class="band">Not now</div>
+          </div>
+        </div>
+
+        <!-- FINISH CONFIRM -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Finish confirm</h3><div class="fn">FinishConfirmModal()</div></div><span class="badge modal">Overlay</span></div>
+          <p class="purpose">Guardrail before logging &amp; ending an active session.</p>
+          <div class="wire">
+            <div class="band">"Finish workout?" + copy</div>
+            <div class="band pl">Yes, finish &amp; log (green)</div>
+            <div class="band">Keep going (ghost)</div>
+          </div>
+        </div>
+
+        <!-- VIDEO OVERLAY -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Demo player</h3><div class="fn">VideoOverlay</div></div><span class="badge modal">Overlay</span></div>
+          <p class="purpose">Full-screen exercise demo — source clip, uploaded clip, or generic fallback.</p>
+          <div class="wire">
+            <div class="band hd">← exercise name</div>
+            <div class="band">16:9 player (seeks to timestamp)</div>
+            <div class="band">Exercise Details — sets/reps/weight/rest pills</div>
+            <div class="band">form notes + "jumping to m:ss"</div>
+            <div class="band">← Back to Workout</div>
+          </div>
+          <div class="anat"><b>3 demo modes</b><ul><li><span class="mono">source_video</span> — jump into original YouTube</li><li><span class="mono">uploaded_video</span> — your clip via proxy</li><li><span class="mono">generic_demo</span> — YouTube search fallback</li></ul></div>
+        </div>
+
+        <!-- DRAWER + TOAST -->
+        <div class="screen">
+          <div class="screen-head"><div><h3>Inline demo drawer + Toast</h3><div class="fn">ExerciseVideoDrawer · toast</div></div><span class="badge modal">Overlay</span></div>
+          <p class="purpose">Two lightweight utilities: an expand-in-place YouTube demo, and the transient confirmation toast.</p>
+          <div class="wire">
+            <div class="band">▼ expands under an exercise row → embedded YT demo</div>
+            <div class="band">loading 🔍 / found / "no demo" states</div>
+            <div class="band pl">toast — bottom-center, blue, auto-dismiss 2.2s</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ NEW SCREENS ============ -->
+  <section id="new">
+    <div class="container">
+      <div class="eyebrow">05 — Design canvas</div>
+      <h2>Screens that don't exist yet</h2>
+      <p class="sec-lede">The gaps worth designing next — drawn from the deferred Phase 2 items, the roadmap's differentiator strategy, and holes in the current flow. Each notes why it matters and where it maps.</p>
+
+      <div class="callout" style="margin-bottom:22px"><b>Lean into the moat.</b> Every exercise is permanently tagged with <span class="mono">creator_handle</span> + <span class="mono">creator_platform</span> — that's SetList's structural edge over 10+ extraction competitors. The creator &amp; type browse screens below turn that data into a real differentiator, not metadata.</p></div>
+
+      <div class="grid cols-2">
+        <div class="idea"><h4>Creator page</h4><p class="why">All workouts &amp; exercises from one <span class="mono">@handle</span>, in one place — the "your handle is already a category" pitch made real. Follow, browse, attribute.</p><div class="maps">MAPS TO · Layer 2 differentiator · Phase 5 community</div></div>
+        <div class="idea"><h4>Browse by type</h4><p class="why">Filter the whole library by the closed exercise-type set — strength / cardio / core / mobility / plyometric. Discovery beyond a single workout.</p><div class="maps">MAPS TO · Layer 2 · creator/type browsing</div></div>
+        <div class="idea"><h4>Profile &amp; settings</h4><p class="why">Today "account" is a lone sign-out row on Progress. A real profile: display name, email, notifications, sign out, delete account.</p><div class="maps">MAPS TO · deferred Phase 2 · "dedicated profile screen"</div></div>
+        <div class="idea"><h4>Per-exercise progress</h4><p class="why">Tap an exercise → a time-series of weight/volume for it. The current Progress screen shows PRs + weekly volume, but not the trend per movement.</p><div class="maps">MAPS TO · deferred Phase 2 · "progress-over-time charts"</div></div>
+        <div class="idea"><h4>Resume in-progress</h4><p class="why">A refresh mid-workout currently loses the session. A "continue your workout?" banner/prompt to restore it.</p><div class="maps">MAPS TO · deferred Phase 2 · "resumable workout"</div></div>
+        <div class="idea"><h4>Offline &amp; error states</h4><p class="why">No-signal library (gym reality), a failed-load retry, a cloud-sync-failed banner. Designed states, not raw toasts.</p><div class="maps">MAPS TO · deferred Phase 2 · "offline read cache"</div></div>
+        <div class="idea"><h4>Upgrade / paywall</h4><p class="why">Free (~5 extractions/mo) vs Pro (~$4.99/mo). The reel-to-card moment as the hero of the pitch.</p><div class="maps">MAPS TO · Phase 4 · Stripe paywall</div></div>
+        <div class="idea"><h4>Branded auth email</h4><p class="why">Magic-link emails still ship from the default "Supabase Auth" template. Design the SetList sign-in email before beta testers see it.</p><div class="maps">MAPS TO · Pre-Beta watch-item</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      Generated from the shipped SetList source — <span class="mono">src/App.jsx</span>, <span class="mono">brand-kit/BRAND.md</span>, <span class="mono">STYLES</span> / <span class="mono">C</span> palette — as of Jul 22 2026, Phase 2 (Supabase accounts) live. Real faces: Big Shoulders Display · Manrope · DM Mono (Google Fonts, available in Figma). Light-only by brand.
+    </div>
+  </footer>
+</div>
+
+<div class="toast-live" id="tl">Copied</div>
+<script>
+  (function(){
+    var tl=document.getElementById('tl'),t;
+    document.querySelectorAll('.swatch').forEach(function(sw){
+      sw.addEventListener('click',function(){
+        var hex=sw.getAttribute('data-hex');
+        if(!hex)return;
+        var done=function(){tl.textContent=hex+' copied';tl.classList.add('show');clearTimeout(t);t=setTimeout(function(){tl.classList.remove('show');},1400);};
+        if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(hex).then(done).catch(done);}else{done();}
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
