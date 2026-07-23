@@ -20,7 +20,7 @@ SetList is a workout-extraction app: paste a YouTube / Instagram / TikTok link (
 - **Phase 1.5 (Design Sprint) — CLOSED** (Jul 21).
 - **Phase 2 (Supabase: accounts + durable persistence) — SHIPPED & LIVE** (this session, Jul 22). This was the **gate for Beta**: users no longer lose everything on reinstall. Claude Code built it directly (no freelancer).
 - **Beta is the next gate**, now cleared to pursue. The **"SetList Action Ratio"** quick win (saved-vs-done retention metric, borrowed from competitor FeedLift) is still queued and undecided — Greg chose Phase 2 first; it can now be computed from the Supabase data.
-- Live roadmap doc (Drive): **"SetList Roadmap — CURRENT (as of Jul 22, 2026)"** — https://docs.google.com/document/d/1M5e4-czDsYQ0seFPWxEY4BGoXwEu5B3XAJqLfJ8fcM8/edit (several older "CURRENT" docs still sit in the same folder — no delete capability from the tools — so confirm this dated one is latest before trusting it).
+- Live roadmap doc (Drive): **"SetList: Full-Vision Roadmap — Execution Edition (Jul 22, 2026 · Phase 2 SHIPPED)"** — https://docs.google.com/document/d/1yIhfQQtryahnkdlNQYO8iC1lHNytko92-YxLxOgmSpw/edit (updated this session to mark Phase 2 shipped + add a Pre-Beta watch-items list. Three older "CURRENT" docs still sit in the same folder pending manual trashing — no delete capability from the tools — so confirm this dated one is latest before trusting it).
 
 ## What shipped this session
 **Phase 2 — Supabase accounts + durable per-user persistence, end-to-end and live.** Details:
@@ -60,7 +60,7 @@ The core is done and live. Remaining work is **deferred polish, none of it block
 ## Pointers
 - **Repo**: `C:\Users\ghunt\setlist`  ·  **Prod**: https://setlist-ten-tau.vercel.app
 - **Supabase**: project ref `bpojvolgrgfbqydanvsg` · dashboard https://supabase.com/dashboard/project/bpojvolgrgfbqydanvsg · design/verification notes in `docs/phase-2-supabase.md`
-- **Roadmap (Drive)**: "SetList Roadmap — CURRENT (as of Jul 22, 2026)" — https://docs.google.com/document/d/1M5e4-czDsYQ0seFPWxEY4BGoXwEu5B3XAJqLfJ8fcM8/edit
+- **Roadmap (Drive)**: "SetList: Full-Vision Roadmap — Execution Edition (Jul 22, 2026 · Phase 2 SHIPPED)" — https://docs.google.com/document/d/1yIhfQQtryahnkdlNQYO8iC1lHNytko92-YxLxOgmSpw/edit
 - **Architecture & conventions**: `CLAUDE.md` (repo root) — the single most important file to read first
 - **Brand kit**: `brand-kit/` (`BRAND.md` is canonical for palette/type/voice/logo)
 - **Memory (auto-loads in a new Claude Code session in this folder)**: `C:\Users\ghunt\.claude\projects\C--Users-ghunt-setlist\memory\`
