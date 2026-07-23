@@ -5,15 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SetList — UI Blueprint</title>
 <style>
-@page{margin:13mm}
+@page{size:A4;margin:12mm}
 html,body{background:#fff;margin:0}
 *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 @media print{
-.secnav{display:none!important}
-.toast-live{display:none!important}
-.panel,.screen,.swatch,.idea,.canvas,.type-row,.flow-tier,.type-tag,.node{break-inside:avoid}
-section{padding-top:26px!important;padding-bottom:26px!important}
-a{color:#1A5FBF!important}
+  .secnav,.toast-live{display:none!important}
+  .wrap{background:#fff!important}
+  .container{max-width:100%!important;padding:0!important}
+  .mast{padding:0 0 16px!important;border-bottom:1px solid #E3E5EA}
+  .wordmark{font-size:42px!important}
+  .mast h1{font-size:23px!important;margin:14px 0 8px!important}
+  .mast .lede{font-size:13px!important}
+  section{padding:18px 0!important}
+  .eyebrow{margin-bottom:8px}
+  .sec-lede{margin-bottom:18px;font-size:13px}
+  h2,h3,h4{break-after:avoid}
+  /* keep every block within the page width — the wide web grids collapse for print */
+  .grid.cols-2,.screens{grid-template-columns:1fr!important}
+  .grid.cols-3,.grid.cols-4{grid-template-columns:1fr 1fr!important}
+  /* never split a unit across a page boundary */
+  .panel,.screen,.swatch,.idea,.canvas,.type-row,.flow-tier,.node,.wire,.sl-wcard,.spec-cell,.group-label{break-inside:avoid;page-break-inside:avoid}
+  .swatches{break-inside:auto}
+  a{color:#1A5FBF!important}
+  footer{padding:22px 0 0!important}
 }
 </style>
 </head>
