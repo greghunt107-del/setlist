@@ -1,58 +1,70 @@
-# SetList — Session Handoff (as of 2026-07-22, end of session — right after the blank-screen crash fix)
+# SetList — Session Handoff (as of 2026-07-22 evening Pacific / ≈2026-07-23 00:00 UTC — Phase 2 shipped & live)
 
-> Note on timing: the working environment's clock is unreliable (it disagreed with real Pacific time this session), so this handoff is anchored to the date and the latest commit rather than a precise wall-clock time. The git log is the ground truth for how far we got.
+> Note on timing: the working environment's clock is unreliable, so this handoff is anchored to the date and the latest commit (`fd8dc6d`) rather than a precise wall-clock time. The git log is ground truth.
 
 ## What SetList is
-SetList is a workout-extraction app: paste a YouTube / Instagram / TikTok link (or upload a video) and it extracts a structured, followable workout — every exercise identified, tagged by type, timestamped to where it happens in the source video, and attributed to the creator who made it. Users can then run the workout with a timer, log sets, track history/streaks, and build custom workouts from an exercise library. React 19 + Vite frontend (the whole app is one big `src/App.jsx`), a hybrid AI extraction backend on Vercel serverless functions (`api/`), and localStorage-only persistence (no database yet — that's Phase 2). Full architecture and conventions live in `CLAUDE.md` at the repo root — read that first.
+SetList is a workout-extraction app: paste a YouTube / Instagram / TikTok link (or upload a video) and it extracts a structured, followable workout — every exercise identified, tagged by type, timestamped to where it happens in the source video, and attributed to the creator who made it. Users can then run the workout with a timer, log sets, track history/streaks, and build custom workouts from an exercise library. **As of this session, accounts (Google or email magic-link) sync everything to Supabase across devices.** React 19 + Vite frontend (the whole app is one big `src/App.jsx`), a hybrid AI extraction backend on Vercel serverless functions (`api/`), and — new this session — Supabase (Postgres + Auth) for per-user persistence. Full architecture and conventions live in `CLAUDE.md` at the repo root — read that first.
 
 ## Current state — verified
-- **Git**: working tree clean; local `main` matches `origin/main` (everything pushed).
-- **HEAD**: `0bdf556` — "Document the hooks-inside-plain-function-screens landmine in CLAUDE.md"
-- **Deploy**: live at **https://setlist-ten-tau.vercel.app** (Vercel auto-deploys every push to `main`; last deploy confirmed green this session).
+- **App code**: fully committed, pushed, and deployed. `git status` is clean except for **doc-only** changes from this handoff (`CLAUDE.md` update + this `HANDOFF.md` + refreshed memory files) — offered for commit at the end of the session.
+- **HEAD = origin/main = `fd8dc6d`** — "Add Phase 2: Supabase accounts + durable per-user persistence".
+- **Deploy**: live at **https://setlist-ten-tau.vercel.app**, **confirmed working in production this session** — Claude verified the app serves the new auth-gated build, and Greg signed in with Google and imported his real pre-account workouts on the live site.
 - **Recent commits**:
+  - `fd8dc6d` Add Phase 2: Supabase accounts + durable per-user persistence
+  - `c9af6ce` Add /handoff skill and generate the first HANDOFF.md
   - `0bdf556` Document the hooks-inside-plain-function-screens landmine in CLAUDE.md
   - `f8f1f37` Fix crash-to-blank-screen when finishing onboarding, analysis, or a workout
-  - `3af874a` Bring CLAUDE.md up to date with what's actually shipped
   - `5499da9` Fix three bugs found testing an Instagram video upload
-  - `bac462f` Finish the tracker (active workout screen) design-sprint pass
 
 ## Where we are on the roadmap
-- **Phase 1.5 (Design Sprint) is CLOSED.** Big Shoulders Display rebrand, full brand kit in `brand-kit/`, new "SL" monogram app icon, and the Import / Home / Library / Tracker screens all redesigned.
-- **Phase 2 (Database + Accounts, Supabase) is NEXT and has NOT been started.** Auth, migrate off localStorage (`sl_workouts`/`sl_history`), per-user stats, progress charts, profile screen. Decision made: **Claude Code builds this directly — no freelancer** (the roadmap originally said "freelancer-led"; Greg changed that because he's not sure how he'd manage a freelancer and trusts the direct build given the backend work already shipped this session).
-- Live roadmap doc (Google Drive): **"SetList Roadmap — CURRENT (as of Jul 22, 2026)"** — https://docs.google.com/document/d/1M5e4-czDsYQ0seFPWxEY4BGoXwEu5B3XAJqLfJ8fcM8/edit . (Note: several older "CURRENT" roadmap docs still sit in the same Drive folder because there's no delete capability from the tools — this dated one supersedes them all.)
+- **Phase 1.5 (Design Sprint) — CLOSED** (Jul 21).
+- **Phase 2 (Supabase: accounts + durable persistence) — SHIPPED & LIVE** (this session, Jul 22). This was the **gate for Beta**: users no longer lose everything on reinstall. Claude Code built it directly (no freelancer).
+- **Beta is the next gate**, now cleared to pursue. The **"SetList Action Ratio"** quick win (saved-vs-done retention metric, borrowed from competitor FeedLift) is still queued and undecided — Greg chose Phase 2 first; it can now be computed from the Supabase data.
+- Live roadmap doc (Drive): **"SetList Roadmap — CURRENT (as of Jul 22, 2026)"** — https://docs.google.com/document/d/1M5e4-czDsYQ0seFPWxEY4BGoXwEu5B3XAJqLfJ8fcM8/edit (several older "CURRENT" docs still sit in the same folder — no delete capability from the tools — so confirm this dated one is latest before trusting it).
 
 ## What shipped this session
-- **Full design-sprint rebrand**: swapped display face from Syne to Big Shoulders Display (Syne read "cartoony" at heavy weight); produced and committed a brand kit (`brand-kit/BRAND.md`, `logo.svg`, `tokens.css`, `colors.json`, `app-icon/`); shipped a new two-tone "SL" monogram app icon replacing a stale purple-gradient placeholder.
-- **Screen redesigns**: Import (hero paste field + platform-detection pills + real analyzing-stage list), Home (byline creator attribution), Library (grid/list/grouped + builder), Tracker copy/polish. Plus onboarding fixes.
-- **Three upload bugs fixed** (`5499da9`): uploaded videos now get a client-captured thumbnail; exercise demos play the actual uploaded clip via a new `api/video-proxy.js` (streams private Blob video with Range support) instead of a generic YouTube search; and the creator-handle input no longer lost focus every keystroke.
-- **Critical crash fix** (`f8f1f37`): finishing onboarding, landing on the review screen after an analysis, or finishing a workout could crash the whole app to a blank screen. Root cause: three nested "screen" closures (`OnboardingScreen`, `ReviewScreen`, `CompletionScreen`) declared their own React hooks while being called as plain functions — a Rules-of-Hooks violation with no error boundary to catch it. Fixed by lifting their state to `App`'s top level. This is the "analyzer times out, screen goes black" symptom Greg reported. **Now documented as a permanent landmine in CLAUDE.md.**
-- **Competitive-intel roadmap update**: see next section.
+**Phase 2 — Supabase accounts + durable per-user persistence, end-to-end and live.** Details:
+- **Schema** (`supabase/migrations/0001_init.sql`): `profiles`, `workouts`, `sessions`, `own_exercises`; owner-only RLS (`user_id = auth.uid()`); a profile-on-signup trigger; `updated_at` triggers. **Hybrid design** — top-level fields are real columns, but the two exercise arrays stay **JSONB** (`workouts.exercise_list`, `sessions.exercises`) so App.jsx's shapes barely changed. `sessions.workout_id` is nullable + `ON DELETE SET NULL` with a title/exercises snapshot, so **history survives workout deletion** (preserves the old behavior).
+- **Client + data layer**: `src/lib/supabase.js` (client) and `src/lib/db.js` (row⇄app-shape mappers + CRUD + the import routine).
+- **Auth**: Google OAuth + email magic-link, both linking to one account per email. Whole app gated behind a sign-in `AuthScreen`; `session`/`authReady` + `AuthScreen` form state live at `App`'s top level (per the plain-function-screen hooks rule).
+- **One-time localStorage → account import**: when a user with pre-account data first signs in, their old `sl_workouts`/`sl_history` are upserted into Supabase (UUIDs minted, old `Date.now()` workout ids remapped to the new session FKs), then `profiles.migrated_local_at` is stamped so it never re-runs. **Verified on Greg's real production data.**
+- **`own_exercises` is now durable** (was ephemeral React state that vanished on refresh). Sign-out added to the Progress screen.
+- **Verification**: full loop proven against the live DB — locally via an anonymous session (import + FK remap + JSONB fidelity + reload persistence + live insert + delete-preserves-history + RLS), then Greg's real Google sign-in + real data import on production. Clean production build confirmed before deploy.
+- **Docs**: `docs/phase-2-supabase.md` (design + field maps + verification log); `CLAUDE.md` Persistence section rewritten.
 
 ## What's next (the actual next actionable thing)
-1. **Phase 2 — Supabase (accounts + real persistence).** This is the clear next build and the gate for Beta (localStorage means users lose everything on reinstall). Claude Code builds it directly. Reasonable starting point: schema + auth flow + a migration plan from the current localStorage keys.
-2. **Undecided / queued:** a **"SetList Action Ratio"** metric (saved-vs-done, a retention hook borrowed from competitor FeedLift) — computable *today* from existing localStorage data with no backend, so it's a cheap quick win. Open question Greg was weighing: build this first as a fast standalone win, or go straight into Phase 2. Not decided.
-3. **Instagram friction (recurring concern):** Instagram import works today only via manual caption-paste or file upload — there is no automatic paste-and-go, and won't be until Phase 4's native Share Extension. An **Android-only PWA Share Target** was floated as a faster partial fix (Android only; iOS can't do this for PWAs). Greg said "not yet." Worth resurfacing if Instagram friction comes up again — it's one of his most important channels and a stated anxiety.
+The core is done and live. Remaining work is **deferred polish, none of it blocking** — the "make it perfect later" list:
+1. **Publish the Google OAuth app** — the highest-priority near-term item. It's still in "testing" mode, so **only added test users can use the Google button**. Publish before inviting beta testers (Google Auth Platform → Audience → Publish; no verification review needed for the basic email/profile scopes). Magic-link already works for anyone.
+2. **Brand the auth emails** — they currently send from the default "Supabase Auth" template.
+3. **Per-user offline read cache** — so the library loads with no signal (e.g. at the gym). Deferred by design.
+4. **Resume an in-progress workout** after a refresh. Deferred by design.
+5. **Undecided/queued**: the "SetList Action Ratio" metric (fast retention win, now computable from Supabase data).
+6. Pre-existing tech debt (from CLAUDE.md): durable rate limiting (Vercel KV / Upstash) before real usage volume.
 
 ## Key decisions & why
-- **Instagram auto-fetch is ruled out, deliberately.** Meta's oEmbed returns no caption/author data even with App Review (live-tested). No scraping dependency either — it's a ToS-violating, revocable foundation risk. The durable fix is a native Share Extension at Phase 4. Don't reopen this without new information.
-- **Extraction alone is no longer the differentiator.** 10+ competitors already do "link → structured workout" (FitSaver, FeedLift, RepReel, Stashd, Repperoo, Reelief, Gymdex, Gymnify, SetSaver). FeedLift is most advanced (habit/identity layer: muscle heatmap, Action Ratio, AI programs, Apple Health sync, XP/streaks). **SetList's structural edge is that every exercise is mandatorily tagged with creator handle + platform** — lean into creator/type browsing, not a head-on habit-tracker arms race. Roadmap now gates the App Store launch (Phase 4) on shipping a real differentiator first (no bare-wrapper launch), and adds a milestone to benchmark extraction accuracy vs FeedLift before claiming "more accurate" in marketing.
-- **Phase 2 is Claude-built, not freelancer-led** (see roadmap section above).
+- **Hybrid schema (JSONB exercise arrays), not full normalization** — chosen to keep the migration faithful and App.jsx changes minimal; normalize exercises into real rows *later*, only when the creator/type-browsing differentiator needs SQL. (Greg picked this over full-normalize.)
+- **Google + magic-link auth** (not email/password) — low friction, no password management; add Sign in with Apple at Phase 4 for the App Store.
+- **Supabase = source of truth**, localStorage demoted to legacy/import-source (offline cache deferred).
+- **Phase 2 built branch-first, merged to deploy** — `main` was kept deployable until the Vercel env vars existed, because every push to `main` auto-deploys and shipping the auth gate without Supabase creds would have gated the live app behind a broken sign-in. Env vars added first, then merged.
+- **Anonymous sign-ins** were toggled ON only to let Claude drive an anon session for verification, then **turned back OFF** (verified off).
 
 ## Gotchas / landmines
-- **Nested screen closures must NOT declare their own hooks.** Screens like `ImportScreen`/`ReviewScreen`/`OnboardingScreen`/`CompletionScreen` are called as plain functions (`XScreen()`, not `<XScreen/>`) to avoid a focus-loss remount bug — but that means any `useState`/`useEffect` inside them corrupts `App`'s hook order and crashes the entire app (no error boundary exists). Any state a screen needs goes at `App`'s top level. This bug shipped twice; it's now spelled out in CLAUDE.md's Conventions. **Read that section before adding or refactoring any screen.**
-- **`/api/*` routes don't run on the Vite dev server.** Anything backend-touching must be verified against the deployed app (production), not localhost.
-- **`BLOB_READ_WRITE_TOKEN` is "Sensitive" in Vercel** — unretrievable in plaintext once set. Test Blob-touching code against production, not local `.env`.
-- **Use the `setlist-ten-tau.vercel.app` domain for testing** — the default `...greghunt107-3649s-projects.vercel.app` domain has SSO/Deployment Protection and 401s scripted requests.
-- **Google Drive: no delete capability** from the available tools — every roadmap update creates a new doc; Greg trashes old ones manually. Always confirm which dated "CURRENT" doc is latest before trusting one.
-- **Verify, don't assert.** Greg expects claims backed by real tests (production calls, browser checks, byte comparisons), not "should work" reasoning — and plain correction when something's wrong.
+- **Nested screen closures must NOT declare their own hooks.** Screens like `AuthScreen`/`ImportScreen`/`ReviewScreen`/`OnboardingScreen` are called as plain functions (`XScreen()`, not `<XScreen/>`) to avoid a focus-loss remount bug — but that means any `useState`/`useEffect` inside them corrupts `App`'s hook order and crashes the whole app (no error boundary exists). Any state a screen needs goes at `App`'s top level. Spelled out in CLAUDE.md's Conventions — **read that before adding/refactoring any screen.**
+- **Supabase auth config isn't readable via the anon API** — the redirect-URL allowlist and provider secrets can't be fetched. Verify *functionally*: probe `GET /auth/v1/settings` (→ `external.google`/`external.email`), and test `supabase.auth.signInAnonymously()` to check the anon toggle. A dev-only `window.__sb` client handle is exposed on `localhost` (stripped from prod) for console testing.
+- **Magic-link / OAuth must complete in the same browser that started it, on a host where the redirect URL resolves.** `localhost:5173` only exists on the dev machine — clicking a magic link on a phone or a different browser lands on a blank/black page. (This bit us during testing.)
+- **`/api/*` routes don't run on the Vite dev server** — backend-touching changes need the deployed app. **Supabase is the exception** (client-side), so auth + persistence *are* testable on `npm run dev`.
+- **`BLOB_READ_WRITE_TOKEN` is "Sensitive" in Vercel** — unretrievable once set; test Blob code against prod.
+- **Use `setlist-ten-tau.vercel.app`** for testing — the default `…greghunt107-3649s-projects.vercel.app` domain has Deployment Protection and 401s scripted requests.
+- **Verify, don't assert.** Greg expects claims backed by real tests (production calls, browser checks, DB queries), and plain correction when something's wrong.
 
 ## Pointers
 - **Repo**: `C:\Users\ghunt\setlist`  ·  **Prod**: https://setlist-ten-tau.vercel.app
+- **Supabase**: project ref `bpojvolgrgfbqydanvsg` · dashboard https://supabase.com/dashboard/project/bpojvolgrgfbqydanvsg · design/verification notes in `docs/phase-2-supabase.md`
 - **Roadmap (Drive)**: "SetList Roadmap — CURRENT (as of Jul 22, 2026)" — https://docs.google.com/document/d/1M5e4-czDsYQ0seFPWxEY4BGoXwEu5B3XAJqLfJ8fcM8/edit
 - **Architecture & conventions**: `CLAUDE.md` (repo root) — the single most important file to read first
 - **Brand kit**: `brand-kit/` (`BRAND.md` is canonical for palette/type/voice/logo)
 - **Memory (auto-loads in a new Claude Code session in this folder)**: `C:\Users\ghunt\.claude\projects\C--Users-ghunt-setlist\memory\`
 
 ## How to resume
-- **New Claude Code session in this folder** (`C:\Users\ghunt\setlist`): the memory files and `CLAUDE.md` auto-load — just open a session and say "where were we." The `/handoff` command is also available here to regenerate this doc anytime.
+- **New Claude Code session in this folder** (`C:\Users\ghunt\setlist`): the memory files and `CLAUDE.md` auto-load — just open a session and say "where were we." `/handoff` regenerates this doc anytime.
 - **Any other tool** (claude.ai web, mobile, a different machine): paste this entire file as your first message. It stands on its own.
